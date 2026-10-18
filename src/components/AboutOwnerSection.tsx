@@ -36,31 +36,21 @@ export const AboutOwnerSection: React.FC<AboutOwnerSectionProps> = ({ onOpenBook
           
           {/* Left Column: Official Photograph */}
           <div className="lg:col-span-5 flex flex-col items-center">
-            <div className="relative group max-w-full">
-              {/* Outer Glow & Gradient Ring */}
-              <div className="absolute -inset-2 bg-gradient-to-r from-amber-500 via-[#1E3A8A] to-[#0F2847] rounded-3xl blur-md opacity-40 group-hover:opacity-75 transition duration-500"></div>
-
-              {/* Photo Container */}
-              <div className="relative w-56 max-w-full sm:w-64 lg:w-72 h-72 sm:h-80 lg:h-96 rounded-2xl overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 bg-slate-200">
+            <div className="portrait-panel">
+              <div id="ibrahim-portrait" className="portrait-scene">
+                <span className="portrait-orbit portrait-orbit-outer" aria-hidden="true" />
+                <span className="portrait-orbit portrait-orbit-inner" aria-hidden="true" />
                 <img
                   src={COMPANY_INFO.ownerPhoto}
-                  alt="المحاسب إبراهيم - خبرة أكثر من 15 سنة في المحاسبة المالية والضرائب"
-                  className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                  alt={`${t.name[language]} — ${t.role[language]}`}
+                  className="portrait-photo"
                   loading="lazy"
                 />
-
-                {/* Bottom Overlay Badge on Photo */}
-                <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent text-white">
-                  <p className="font-extrabold text-lg text-amber-300">{t.name[language]}</p>
-                  <p className="text-xs text-slate-200 font-medium">{t.role[language]}</p>
-                </div>
               </div>
-            </div>
-
-            {/* CRA Accreditation Pill */}
-            <div className="mt-3 flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-sm text-[11px] sm:text-xs text-center font-bold">
-              <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-600" />
-              <span>{t.verifiedBadge[language]}</span>
+              <div className="mt-3 flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-black/20 text-amber-100 border border-amber-400/20 text-[11px] sm:text-xs text-center font-bold">
+                <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-400" />
+                <span>{t.verifiedBadge[language]}</span>
+              </div>
             </div>
           </div>
 

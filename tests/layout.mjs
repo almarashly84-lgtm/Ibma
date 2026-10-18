@@ -3,7 +3,8 @@ import { mkdir } from 'node:fs/promises';
 import { chromium } from '@playwright/test';
 import { preview } from 'vite';
 
-const server = await preview({ preview: { host: '127.0.0.1', port: 4174, strictPort: true } });
+const origin = process.env.TEST_BASE_URL || 'http://127.0.0.1:4174';
+const server = process.env.TEST_BASE_URL ? null : await preview({ preview: { host: '127.0.0.1', port: 4174, strictPort: true } });
 await mkdir('test-results', { recursive: true });
 const browser = await chromium.launch({ timeout: 15000, args: ['--disable-gpu'] });
 try {
@@ -11,7 +12,7 @@ try {
     const context = await browser.newContext({ viewport: { width, height: width < 640 ? 844 : 1000 }, reducedMotion: 'reduce', permissions: ['clipboard-read', 'clipboard-write'] });
     const page = await context.newPage();
     page.setDefaultTimeout(12000);
-    await page.goto('http://127.0.0.1:4174', { waitUntil: 'domcontentloaded', timeout: 15000 });
+    await page.goto(origin, { waitUntil: 'domcontentloaded', timeout: 15000 });
     await page.locator('h1').waitFor();
     await page.waitForFunction(() => document.fonts.status === 'loaded');
     await page.locator('img').evaluateAll(images => images.forEach(image => { image.loading = 'eager'; }));
@@ -23,7 +24,7 @@ try {
         const text = label.getBoundingClientRect(), pill = label.parentElement.getBoundingClientRect();
         const stage = document.getElementById('services-orbit').getBoundingClientRect();
         const about = document.querySelector('#about h2').getBoundingClientRect();
-        const photo = document.querySelector('#about img').getBoundingClientRect();
+        const photo = document.querySelector('#about .portrait-panel').getBoundingClientRect();
         return {
           textFits: text.left >= pill.left + 4 && text.right <= pill.right - 4,
           textHeight: text.height,
@@ -38,6 +39,13 @@ try {
       assert(sizes.orbitGap >= 8 && sizes.orbitGap <= (width < 640 ? 20 : 40), `${width}/${language}: excess orbit gap`);
       if (width < 1024) assert(sizes.photoGap <= (width < 640 ? 56 : 72), `${width}/${language}: excess heading/photo gap`);
       assert(sizes.noOverflow, `${width}/${language}: horizontal overflow`);
+      assert.equal(await page.locator('#ibrahim-portrait .portrait-orbit').count(), 2);
+      assert.equal(await page.locator('.portrait-orbit-outer').evaluate(el => getComputedStyle(el).animationName), 'none', 'reduced-motion disables portrait decoration');
+      const portrait = await page.locator('#ibrahim-portrait img').evaluate(el => ({ width: el.clientWidth, height: el.clientHeight, radius: getComputedStyle(el).borderRadius, transform: getComputedStyle(el).transform }));
+      assert.equal(portrait.width, portrait.height, 'portrait remains circular');
+      assert(portrait.width > 150);
+      assert.equal(portrait.radius, '50%');
+      assert.equal(portrait.transform, 'none', 'the person does not rotate');
       assert.equal(await page.getByRole('button', { name: /^(Pause|Play|إيقاف|دوران)$/ }).count(), 0);
       const credit = page.locator('#site-credit');
       const name = credit.getByRole('link', { name: 'Alaa Eddin Digital', exact: true });
@@ -70,11 +78,19 @@ try {
       await page.locator('#copy-address').click();
       await page.getByRole('status').filter({ hasText: { ENG: 'Address copied', FR: 'Adresse copiée', AR: 'تم نسخ العنوان' }[language] }).waitFor();
       assert.equal(await page.evaluate(() => navigator.clipboard.readText()), address, 'copy uses the exact, correctly ordered postal address');
+      assert.equal(await page.locator('#contact-email a').getAttribute('href'), 'mailto:info@ibmaaccounting.ca');
+      await page.locator('#copy-email').click();
+      await page.locator('#contact-email [role="status"]').filter({ hasText: { ENG: 'Email address copied', FR: 'Courriel copié', AR: 'تم نسخ البريد الإلكتروني' }[language] }).waitFor();
+      assert.equal(await page.evaluate(() => navigator.clipboard.readText()), 'info@ibmaaccounting.ca', 'email copy is separate from mailto');
       if (width === 390 && language === 'AR') {
         await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw new DOMException('Blocked', 'NotAllowedError'); } } }));
+        await page.locator('#copy-email').click();
+        await page.locator('#contact-email [role="status"]').filter({ hasText: 'تعذّر النسخ' }).waitFor();
         await page.locator('#copy-address').click();
-        await page.getByRole('status').filter({ hasText: 'تعذّر النسخ' }).waitFor();
+        await page.locator('#contact-address [role="status"]').filter({ hasText: 'تعذّر النسخ' }).waitFor();
         await page.evaluate(() => { delete navigator.clipboard; });
+        await page.locator('#copy-email').click();
+        await page.locator('#contact-email [role="status"]').filter({ hasText: 'تم نسخ البريد الإلكتروني' }).waitFor();
         await page.locator('#copy-address').click();
         await page.getByRole('status').filter({ hasText: 'تم نسخ العنوان' }).waitFor();
       }
@@ -97,15 +113,30 @@ try {
       await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
       await page.screenshot({ path: 'test-results/compact-footer.png', animations: 'disabled', timeout: 15000 });
     }
-    console.log(`PASS: ${width}px, all three languages: compact layout, paired footer links, copy address, external maps, phone and WhatsApp, unobscured credit`);
+    console.log(`PASS: ${width}px, all three languages: circular portrait, reduced motion, email/address copy, contact links and compact layout`);
     await context.close();
   }
+  const motionContext = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'no-preference' });
+  const motionPage = await motionContext.newPage();
+  await motionPage.goto(origin, { waitUntil: 'domcontentloaded' });
+  await motionPage.waitForFunction(() => document.fonts.status === 'loaded');
+  await motionPage.locator('#ibrahim-portrait').scrollIntoViewIfNeeded();
+  await motionPage.mouse.move(0, 0);
+  const photoBefore = await motionPage.locator('#ibrahim-portrait img').boundingBox();
+  const rotationBefore = await motionPage.locator('.portrait-orbit-outer').evaluate(el => getComputedStyle(el).transform);
+  await motionPage.waitForFunction(previous => getComputedStyle(document.querySelector('.portrait-orbit-outer')).transform !== previous, rotationBefore);
+  const photoAfter = await motionPage.locator('#ibrahim-portrait img').boundingBox();
+  assert.deepEqual(photoAfter, photoBefore, 'only the decorative frame rotates, not the portrait');
+  await motionPage.emulateMedia({ reducedMotion: 'reduce' });
+  assert.equal(await motionPage.locator('.portrait-orbit-outer').evaluate(el => getComputedStyle(el).animationName), 'none');
+  await motionContext.close();
+  console.log('PASS: gold frame rotates independently and stops when reduced motion is enabled');
   console.log('All 18 responsive-language layout combinations passed.');
 } catch (error) {
   console.error(error);
   process.exitCode = 1;
 } finally {
-  server.httpServer.closeAllConnections();
+  server?.httpServer.closeAllConnections();
   await browser.close();
-  await new Promise(resolve => server.httpServer.close(resolve));
+  if (server) await new Promise(resolve => server.httpServer.close(resolve));
 }

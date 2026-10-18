@@ -16,6 +16,15 @@ export const ContactSection: React.FC = () => {
   const { language } = useLanguage();
   const t = UI_TEXT.contact;
   const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [emailCopyStatus, setEmailCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const copyEmail = async () => {
+    try {
+      await navigator.clipboard.writeText(COMPANY_INFO.email);
+      setEmailCopyStatus('success');
+    } catch {
+      setEmailCopyStatus('error');
+    }
+  };
   const copyAddress = async () => {
     try {
       await navigator.clipboard.writeText(COMPANY_INFO.address);
@@ -98,25 +107,32 @@ export const ContactSection: React.FC = () => {
             </div>
 
             {/* 2. Email Chip */}
-            <a
-              href={`mailto:${COMPANY_INFO.email}`}
-              className="p-3.5 rounded-xl bg-[#0E1420] border border-slate-800 hover:border-amber-500/50 transition-all flex items-center gap-3 group"
+            <div
+              id="contact-email"
+              className="p-3.5 rounded-xl bg-[#0E1420] border border-slate-800 hover:border-amber-500/50 transition-all flex flex-wrap items-center gap-x-3 gap-y-1 group"
             >
               <div className="w-9 h-9 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                 <Mail className="w-4 h-4" />
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                   {t.emailTitle[language]}
                 </span>
-                <p className="text-xs sm:text-sm font-bold text-white truncate" dir="ltr">
+                <a href={`mailto:${COMPANY_INFO.email}`} className="flex min-h-11 items-center text-xs sm:text-sm font-bold text-white hover:text-blue-300 select-text" dir="ltr">
+                  <span className="truncate">
                   {COMPANY_INFO.email}
-                </p>
+                  </span>
+                </a>
                 <span className="text-[10px] text-slate-400 block">
                   24h Response
                 </span>
               </div>
-            </a>
+              <button id="copy-email" type="button" onClick={copyEmail} aria-label={t.copyEmail[language]} title={t.copyEmail[language]} className="w-11 h-11 shrink-0 inline-flex flex-col items-center justify-center gap-0.5 rounded-lg border border-blue-500/30 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 transition-colors">
+                {emailCopyStatus === 'success' ? <Check className="w-4 h-4" aria-hidden="true" /> : <Copy className="w-4 h-4" aria-hidden="true" />}
+                <span className="text-[9px] leading-3">{t.copyShort[language]}</span>
+              </button>
+              {emailCopyStatus !== 'idle' && <p role="status" className={`basis-full text-xs leading-relaxed ${emailCopyStatus === 'success' ? 'text-emerald-400' : 'text-amber-300'}`}>{emailCopyStatus === 'success' ? t.emailCopied[language] : t.emailCopyError[language]}</p>}
+            </div>
 
             {/* 3. Address Chip */}
             <div id="contact-address" className="p-3.5 rounded-xl bg-[#0E1420] border border-slate-800 grid grid-cols-[36px_minmax(0,1fr)] gap-x-3 gap-y-2 items-start sm:col-span-2">
