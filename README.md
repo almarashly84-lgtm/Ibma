@@ -4,6 +4,9 @@ React + TypeScript + Vite source recovered from the repository's own historical 
 
 ## Local verification
 
+The committed lockfile uses public npm tarball URLs so Cloudflare can install
+the same integrity-checked packages without access to a local/private registry.
+
 Use Node 24.13.0 (or a supported Node version >=22.12).
 
 ```sh
