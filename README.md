@@ -14,7 +14,21 @@ npm ci
 npm run build
 npx playwright install chromium
 npm test
+npm run test:layout
 ```
+
+The layout suite checks 320, 360, 390, 473, 768, and 1440px widths in Arabic,
+English, and French: a single-line orbit instruction, compact section spacing,
+the designer link, and a footer credit that stays visible above the fixed
+contact bar without duplicate bottom padding.
+
+## Existing public address
+
+- Primary shared address: https://ibma.almarashly84.workers.dev/
+- Additional Pages address: https://ibma-accounting-review.pages.dev/
+- Both use the same `Ibma` repository. Production follows `main`.
+- Keep the existing `ibma` Worker name and shared address; a new repository or
+  replacement public URL is not needed for website updates.
 
 ## Cloudflare Pages
 

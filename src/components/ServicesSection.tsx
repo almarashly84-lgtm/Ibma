@@ -45,11 +45,11 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
   const [viewMode, setViewMode] = useState<'compact' | 'detailed'>('compact');
 
   return (
-    <section id="services" className="py-16 sm:py-20 bg-[#0A0E15] border-t border-slate-800 relative">
+    <section id="services" className="py-10 sm:py-16 bg-[#0A0E15] border-t border-slate-800 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Heading & View Mode Selector */}
-        <div className="text-center max-w-3xl mx-auto space-y-3 mb-10 sm:mb-12">
+        <div className="text-center max-w-3xl mx-auto space-y-3 mb-6 sm:mb-8">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5" />
             <span>{t.badge[language]}</span>

@@ -640,9 +640,9 @@ export const UI_TEXT = {
   },
   footer: {
     rights: {
-      ar: 'جميع الحقوق محفوظة © IBMA Accounting Ltd.',
-      en: 'All Rights Reserved © IBMA Accounting Ltd.',
-      fr: 'Tous droits réservés © IBMA Accounting Ltd.'
+      ar: 'جميع الحقوق محفوظة لـ IBMA Accounting Ltd.',
+      en: 'All Rights Reserved. IBMA Accounting Ltd.',
+      fr: 'Tous droits réservés. IBMA Accounting Ltd.'
     },
     locationBadge: {
       ar: 'أوتاوا - نيبيان، أونتاريو، كندا',
@@ -650,9 +650,9 @@ export const UI_TEXT = {
       fr: 'Ottawa - Nepean, Ontario, Canada'
     },
     designerSignature: {
-      ar: 'تصميم وبرمجة الموقع بواسطة Alaa Eddin Digital',
-      en: 'Website designed & developed by Alaa Eddin Digital',
-      fr: 'Site web conçu et développé par Alaa Eddin Digital'
+      ar: 'هذا الموقع صمم بواسطة',
+      en: 'This website was designed by',
+      fr: 'Ce site a été conçu par'
     }
   }
 };

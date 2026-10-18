@@ -4,10 +4,7 @@ import { UI_TEXT, COMPANY_INFO } from '../i18n/translations';
 import {
   Award,
   ShieldCheck,
-  CheckCircle,
-  FileText,
   Calendar,
-  Briefcase
 } from 'lucide-react';
 
 interface AboutOwnerSectionProps {
@@ -19,32 +16,32 @@ export const AboutOwnerSection: React.FC<AboutOwnerSectionProps> = ({ onOpenBook
   const t = UI_TEXT.owner;
 
   return (
-    <section id="about" className="py-20 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
+    <section id="about" className="py-8 sm:py-14 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
+        <div className="text-center max-w-3xl mx-auto mb-5 sm:mb-8 space-y-3">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-amber-700 dark:text-amber-400 text-xs font-bold uppercase tracking-wider">
             <Award className="w-4 h-4 text-amber-600" />
             <span>{t.badge[language]}</span>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl leading-snug font-extrabold text-slate-900 dark:text-white tracking-tight">
             {t.title[language]}
           </h2>
         </div>
 
         {/* Profile Card & Bio Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center bg-slate-50 dark:bg-slate-800/60 rounded-3xl p-8 sm:p-12 border border-slate-200 dark:border-slate-700 shadow-sm">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start lg:items-center bg-slate-50 dark:bg-slate-800/60 rounded-3xl p-4 sm:p-6 lg:p-8 border border-slate-200 dark:border-slate-700 shadow-sm">
           
           {/* Left Column: Official Photograph */}
           <div className="lg:col-span-5 flex flex-col items-center">
-            <div className="relative group">
+            <div className="relative group max-w-full">
               {/* Outer Glow & Gradient Ring */}
               <div className="absolute -inset-2 bg-gradient-to-r from-amber-500 via-[#1E3A8A] to-[#0F2847] rounded-3xl blur-md opacity-40 group-hover:opacity-75 transition duration-500"></div>
 
               {/* Photo Container */}
-              <div className="relative w-64 sm:w-72 md:w-80 h-80 sm:h-96 rounded-2xl overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 bg-slate-200">
+              <div className="relative w-56 max-w-full sm:w-64 lg:w-72 h-72 sm:h-80 lg:h-96 rounded-2xl overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 bg-slate-200">
                 <img
                   src={COMPANY_INFO.ownerPhoto}
                   alt="المحاسب إبراهيم - خبرة أكثر من 15 سنة في المحاسبة المالية والضرائب"
@@ -61,14 +58,14 @@ export const AboutOwnerSection: React.FC<AboutOwnerSectionProps> = ({ onOpenBook
             </div>
 
             {/* CRA Accreditation Pill */}
-            <div className="mt-6 flex items-center gap-2 px-4 py-2 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-sm text-xs font-bold">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <div className="mt-3 flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-sm text-[11px] sm:text-xs text-center font-bold">
+              <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-600" />
               <span>{t.verifiedBadge[language]}</span>
             </div>
           </div>
 
           {/* Right Column: Bio Narrative & Stats */}
-          <div className="lg:col-span-7 space-y-6">
+          <div className="lg:col-span-7 space-y-4">
             
             <div>
               <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
@@ -80,15 +77,15 @@ export const AboutOwnerSection: React.FC<AboutOwnerSectionProps> = ({ onOpenBook
             </div>
 
             {/* Bio Paragraphs */}
-            <div className="space-y-4 text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+            <div className="space-y-3 text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
               <p>{t.bioP1[language]}</p>
               <p>{t.bioP2[language]}</p>
             </div>
 
             {/* Stats Counter Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
               {t.stats.map((stat, i) => (
-                <div key={i} className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-center shadow-sm">
+                <div key={i} className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-center shadow-sm">
                   <span className="text-2xl sm:text-3xl font-extrabold text-[#0F2847] dark:text-amber-400 font-sans block">
                     {stat.val}
                   </span>
