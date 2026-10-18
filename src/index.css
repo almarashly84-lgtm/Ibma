@@ -77,6 +77,71 @@
   box-shadow: 0 0 45px rgba(245, 158, 11, 0.5);
 }
 
+/* The decorative frame rotates independently; the original portrait stays still. */
+.portrait-panel {
+  width: 100%;
+  max-width: 380px;
+  padding: 16px 12px;
+  border: 1px solid rgba(219, 180, 89, 0.32);
+  border-radius: 24px;
+  background: radial-gradient(ellipse at 50% 40%, rgba(208, 164, 66, 0.19), transparent 68%),
+    linear-gradient(145deg, #191b1e, #080c12 78%);
+  box-shadow: 0 14px 32px rgba(8, 12, 20, 0.18);
+}
+.portrait-scene {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 1;
+  margin-inline: auto;
+  isolation: isolate;
+}
+.portrait-photo {
+  position: absolute;
+  inset: 24px;
+  width: calc(100% - 48px);
+  height: calc(100% - 48px);
+  object-fit: cover;
+  object-position: 50% 0%;
+  border: 3px solid #e5c877;
+  border-radius: 50%;
+  box-shadow: 0 0 0 5px rgba(213, 172, 73, 0.08), 0 10px 28px rgba(0, 0, 0, 0.4);
+}
+.portrait-orbit {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: portrait-orbit-turn 40s linear infinite;
+}
+.portrait-orbit-outer {
+  inset: 4px;
+  border: 1px dashed rgba(219, 180, 89, 0.55);
+}
+.portrait-orbit-outer::before,
+.portrait-orbit-outer::after {
+  content: "";
+  position: absolute;
+  left: calc(50% - 4px);
+  width: 8px;
+  height: 8px;
+  transform: rotate(45deg);
+  background: linear-gradient(135deg, #fff1b4, #c89b3a);
+  box-shadow: 0 0 12px rgba(241, 207, 121, 0.75);
+}
+.portrait-orbit-outer::before { top: -4px; }
+.portrait-orbit-outer::after { bottom: -4px; }
+.portrait-orbit-inner {
+  inset: 13px;
+  border: 1px solid rgba(219, 180, 89, 0.27);
+  border-top-color: #e7cd88;
+  border-bottom-color: #bb913b;
+  animation-duration: 56s;
+  animation-direction: reverse;
+}
+.portrait-panel:hover .portrait-orbit,
+.portrait-panel:focus-within .portrait-orbit { animation-play-state: paused; }
+@keyframes portrait-orbit-turn { to { transform: rotate(360deg); } }
+
 .gold-text-gradient {
   background: linear-gradient(135deg, #FEF08A 0%, #F59E0B 50%, #D97706 100%);
   -webkit-background-clip: text;
@@ -101,6 +166,7 @@ section[id] { scroll-margin-top: calc(5rem + 8px); }
 .skip-link { position: fixed; top: -200px; left: 1rem; z-index: 10000; padding: 1rem; background: #fbbf24; color: #000; }
 .skip-link:focus { top: 1rem; }
 @media (prefers-reduced-motion: reduce) {
+  .portrait-orbit { animation: none; }
   html { scroll-behavior: auto; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

@@ -23,6 +23,9 @@ the designer link, and a footer credit that stays visible above the fixed
 contact bar without duplicate bottom padding.
 It also checks three paired rows of footer links, separate call/WhatsApp targets,
 external Google Maps directions, and address copying with permission-denied feedback.
+Portrait checks cover a stationary circular photo, independently rotating gold
+decoration, and reduced-motion support. Email checks cover separate mailto/copy
+actions and clipboard success/failure feedback.
 
 ## Existing public address
 
