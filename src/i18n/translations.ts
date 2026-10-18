@@ -618,6 +618,11 @@ export const UI_TEXT = {
     emailTitle: { ar: 'البريد الإلكتروني', en: 'Official Email', fr: 'Courriel Officiel' },
     hoursTitle: { ar: 'ساعات العمل الرسمية', en: 'Business Hours', fr: 'Heures d\'Ouverture' },
     directionsBtn: { ar: 'الاتجاهات على الخريطة', en: 'Get Driving Directions', fr: 'Itinéraire sur la carte' },
+    copyAddress: { ar: 'نسخ العنوان', en: 'Copy address', fr: 'Copier l’adresse' },
+    copied: { ar: 'تم نسخ العنوان', en: 'Address copied', fr: 'Adresse copiée' },
+    copyError: { ar: 'تعذّر النسخ. يمكنك تحديد العنوان ونسخه يدويًا.', en: 'Could not copy. Select the address and copy it manually.', fr: 'Copie impossible. Sélectionnez l’adresse et copiez-la manuellement.' },
+    callBtn: { ar: 'اتصال', en: 'Call', fr: 'Appeler' },
+    whatsappBtn: { ar: 'واتساب', en: 'WhatsApp', fr: 'WhatsApp' },
     todayStatusOpen: { ar: 'مفتوح الآن', en: 'Open Now', fr: 'Ouvert maintenant' },
     todayStatusClosed: { ar: 'مغلق الآن', en: 'Closed Now', fr: 'Fermé maintenant' }
   },

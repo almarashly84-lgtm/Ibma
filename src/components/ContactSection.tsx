@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { UI_TEXT, WORKING_HOURS, COMPANY_INFO } from '../i18n/translations';
 import {
@@ -6,13 +6,24 @@ import {
   Phone,
   Mail,
   Clock,
-  ExternalLink,
-  Navigation
+  Navigation,
+  Copy,
+  Check,
+  MessageCircle
 } from 'lucide-react';
 
 export const ContactSection: React.FC = () => {
   const { language } = useLanguage();
   const t = UI_TEXT.contact;
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const copyAddress = async () => {
+    try {
+      await navigator.clipboard.writeText(COMPANY_INFO.address);
+      setCopyStatus('success');
+    } catch {
+      setCopyStatus('error');
+    }
+  };
 
   // Canadian Eastern Time approximate check
   const isCurrentlyOpen = () => {
@@ -54,15 +65,6 @@ export const ContactSection: React.FC = () => {
               {openNow ? t.todayStatusOpen[language] : t.todayStatusClosed[language]}
             </span>
 
-            <a
-              href={`https://maps.google.com/?q=${encodeURIComponent(COMPANY_INFO.address)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-amber-300 border border-slate-700 transition-colors"
-            >
-              <span>{t.directionsBtn[language]}</span>
-              <Navigation className="w-3 h-3" />
-            </a>
           </div>
         </div>
 
@@ -73,25 +75,27 @@ export const ContactSection: React.FC = () => {
           <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3">
             
             {/* 1. Phone Chip */}
-            <a
-              href={`tel:${COMPANY_INFO.phoneClean}`}
+            <div
+              id="contact-phone"
               className="p-3.5 rounded-xl bg-[#0E1420] border border-slate-800 hover:border-amber-500/50 transition-all flex items-center gap-3 group"
             >
               <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                 <Phone className="w-4 h-4" />
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                   {t.phoneTitle[language]}
                 </span>
-                <p className="text-xs sm:text-sm font-bold text-white truncate" dir="ltr">
-                  {COMPANY_INFO.phone}
-                </p>
-                <span className="text-[10px] text-emerald-400 font-semibold block">
-                  WhatsApp Direct
-                </span>
+                <a href={`tel:${COMPANY_INFO.phoneClean}`} aria-label={`${t.callBtn[language]} ${COMPANY_INFO.phone}`} className="inline-flex min-h-11 max-w-full flex-col justify-center hover:text-amber-300 transition-colors">
+                  <span className="text-xs sm:text-sm font-bold text-white" dir="ltr">{COMPANY_INFO.phone}</span>
+                  <span className="text-[10px] text-amber-300">{t.callBtn[language]}</span>
+                </a>
               </div>
-            </a>
+              <a id="contact-whatsapp" href={COMPANY_INFO.whatsappUrl} target="_blank" rel="noopener noreferrer" aria-label={UI_TEXT.floating.whatsapp[language]} title={UI_TEXT.floating.whatsapp[language]} className="w-11 h-11 shrink-0 inline-flex flex-col items-center justify-center gap-0.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors">
+                <MessageCircle className="w-5 h-5" aria-hidden="true" />
+                <span className="text-[9px] leading-3">{t.whatsappBtn[language]}</span>
+              </a>
+            </div>
 
             {/* 2. Email Chip */}
             <a
@@ -115,7 +119,7 @@ export const ContactSection: React.FC = () => {
             </a>
 
             {/* 3. Address Chip */}
-            <div className="p-3.5 rounded-xl bg-[#0E1420] border border-slate-800 flex items-start gap-3 sm:col-span-2">
+            <div id="contact-address" className="p-3.5 rounded-xl bg-[#0E1420] border border-slate-800 grid grid-cols-[36px_minmax(0,1fr)] gap-x-3 gap-y-2 items-start sm:col-span-2">
               <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
                 <MapPin className="w-4 h-4" />
               </div>
@@ -123,13 +127,24 @@ export const ContactSection: React.FC = () => {
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                   {t.addressTitle[language]}
                 </span>
-                <p className="text-xs sm:text-sm font-bold text-white leading-snug">
+                <p id="office-address" dir="ltr" className="text-xs sm:text-sm font-bold text-white leading-snug text-start select-text">
                   {COMPANY_INFO.address}
                 </p>
                 <span className="text-[10px] text-slate-400 block mt-0.5">
                   Nepean Business Park • Free Parking
                 </span>
               </div>
+              <div className="col-span-2 flex flex-wrap items-center gap-2">
+                <button id="copy-address" type="button" onClick={copyAddress} aria-label={t.copyAddress[language]} className="inline-flex min-h-11 items-center justify-center gap-1.5 px-2 rounded-lg border border-slate-700 bg-slate-800 text-[11px] text-white hover:bg-slate-700 transition-colors">
+                  {copyStatus === 'success' ? <Check className="w-3.5 h-3.5 shrink-0" aria-hidden="true" /> : <Copy className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />}
+                  <span>{t.copyAddress[language]}</span>
+                </button>
+                <a id="address-directions" href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(COMPANY_INFO.address)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center justify-center gap-1.5 px-2 rounded-lg border border-amber-500/30 bg-amber-500/10 text-[11px] text-amber-300 hover:bg-amber-500/20 transition-colors">
+                  <Navigation className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                  <span>{t.directionsBtn[language]}</span>
+                </a>
+              </div>
+              {copyStatus !== 'idle' && <p role="status" className={`col-span-2 text-xs leading-relaxed ${copyStatus === 'success' ? 'text-emerald-400' : 'text-amber-300'}`}>{copyStatus === 'success' ? t.copied[language] : t.copyError[language]}</p>}
             </div>
 
             {/* 4. Hours Summary Chip */}
