@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { UI_TEXT, COMPANY_INFO, ASSETS } from '../i18n/translations';
-import { ShieldCheck, MapPin, Phone, Mail, Clock } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   const { language } = useLanguage();
@@ -19,11 +19,11 @@ export const Footer: React.FC = () => {
     <footer id="site-footer" style={{ paddingBottom: 'calc(var(--contact-bar-height, 76px) + 10px)' }} className="bg-[#070A0F] text-slate-300 border-t border-slate-800 pt-8 sm:pt-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Top Section: Brand & Contact Info Side-by-Side */}
+        {/* Brand and compact navigation; contact details live in the contact section. */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 sm:gap-8 pb-6 sm:pb-8 border-b border-slate-800/80">
           
           {/* Brand & Mission (5 cols) */}
-          <div className="lg:col-span-5 space-y-4">
+          <div className="lg:col-span-7 space-y-4">
             <div className="flex items-center gap-3">
               <div className="h-14 sm:h-16 w-auto flex items-center">
                 <img
@@ -50,12 +50,11 @@ export const Footer: React.FC = () => {
             </div>
           </div>
 
-          {/* Quick Nav Links (3 cols) */}
-          <div className="lg:col-span-3 space-y-3">
+          <nav id="footer-navigation" aria-label={language === 'ar' ? 'أقسام الموقع' : language === 'fr' ? 'Navigation du site' : 'Site sections'} className="lg:col-span-5 space-y-2">
             <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider">
               {language === 'ar' ? 'أقسام الموقع' : language === 'fr' ? 'Navigation' : 'Quick Navigation'}
             </h4>
-            <ul className="space-y-2 text-sm text-slate-400">
+            <ul className="grid grid-cols-2 grid-rows-3 grid-flow-col gap-x-4 gap-y-1 text-sm text-slate-400 [&_button]:min-h-11 [&_button]:text-start">
               <li>
                 <button onClick={() => scrollTo('hero')} className="hover:text-amber-400 transition-colors">
                   {UI_TEXT.nav.home[language]}
@@ -87,37 +86,7 @@ export const Footer: React.FC = () => {
                 </button>
               </li>
             </ul>
-          </div>
-
-          {/* Contact Details Side-by-Side (4 cols) */}
-          <div className="lg:col-span-4 space-y-3">
-            <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider">
-              {language === 'ar' ? 'معلومات التواصل المباشر' : language === 'fr' ? 'Coordonnées Directes' : 'Direct Contact'}
-            </h4>
-            
-            <div className="space-y-2.5 text-xs text-slate-300">
-              <div className="flex items-start gap-2.5">
-                <MapPin className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <span>{COMPANY_INFO.address}</span>
-              </div>
-              <div className="flex items-center gap-2.5" dir="ltr">
-                <Phone className="w-4 h-4 text-amber-400 shrink-0" />
-                <a href={`tel:${COMPANY_INFO.phoneClean}`} className="hover:text-amber-400 hover:underline font-semibold">
-                  {COMPANY_INFO.phone}
-                </a>
-              </div>
-              <div className="flex items-center gap-2.5" dir="ltr">
-                <Mail className="w-4 h-4 text-amber-400 shrink-0" />
-                <a href={`mailto:${COMPANY_INFO.email}`} className="hover:text-amber-400 hover:underline">
-                  {COMPANY_INFO.email}
-                </a>
-              </div>
-              <div className="flex items-start gap-2.5 pt-1 text-slate-400">
-                <Clock className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                <span>{COMPANY_INFO.workingHours.weekdays[language]}</span>
-              </div>
-            </div>
-          </div>
+          </nav>
 
         </div>
 

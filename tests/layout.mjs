@@ -8,7 +8,7 @@ await mkdir('test-results', { recursive: true });
 const browser = await chromium.launch({ timeout: 15000, args: ['--disable-gpu'] });
 try {
   for (const width of [320, 360, 390, 473, 768, 1440]) {
-    const context = await browser.newContext({ viewport: { width, height: width < 640 ? 844 : 1000 }, reducedMotion: 'reduce' });
+    const context = await browser.newContext({ viewport: { width, height: width < 640 ? 844 : 1000 }, reducedMotion: 'reduce', permissions: ['clipboard-read', 'clipboard-write'] });
     const page = await context.newPage();
     page.setDefaultTimeout(12000);
     await page.goto('http://127.0.0.1:4174', { waitUntil: 'domcontentloaded', timeout: 15000 });
@@ -43,6 +43,41 @@ try {
       const name = credit.getByRole('link', { name: 'Alaa Eddin Digital', exact: true });
       assert.equal(await name.getAttribute('href'), 'https://www.alaadigital.at');
       assert.equal((await credit.innerText()).match(/Alaa Eddin Digital/g)?.length, 1);
+      assert.equal(await page.locator('#site-footer a[href^="tel:"], #site-footer a[href^="mailto:"]').count(), 0, 'no repeated contact links in footer');
+      const links = await page.locator('#footer-navigation li').evaluateAll(items => items.map(item => {
+        const rect = item.getBoundingClientRect();
+        return { x: rect.x, y: rect.y };
+      }));
+      assert.equal(links.length, 6);
+      for (let row = 0; row < 3; row++) {
+        assert(Math.abs(links[row].y - links[row + 3].y) < 2, 'footer links form three aligned pairs');
+        assert(Math.abs(links[row].x - links[0].x) < 2, 'first three links share one column');
+        assert(language === 'AR' ? links[row].x > links[row + 3].x : links[row].x < links[row + 3].x, 'footer column order follows language direction');
+      }
+      assert.equal(await page.locator('#contact-phone a[href="tel:+16138800300"]').count(), 1);
+      assert.equal(await page.locator('#contact-whatsapp').getAttribute('href'), 'https://wa.me/16138800300');
+      assert.equal(await page.locator('#contact-whatsapp').getAttribute('target'), '_blank');
+      const directions = page.locator('#address-directions');
+      const mapUrl = new URL(await directions.getAttribute('href'));
+      assert.equal(mapUrl.origin, 'https://www.google.com');
+      assert.equal(mapUrl.pathname, '/maps/dir/');
+      assert.equal(mapUrl.searchParams.get('api'), '1');
+      const address = '30 Concourse Gate Unit 102, Nepean, ON K2E 7V7, Canada';
+      assert.equal(mapUrl.searchParams.get('destination'), address);
+      assert.equal(await directions.getAttribute('target'), '_blank');
+      assert.equal(await page.locator('#contact-address #address-directions').count(), 1, 'directions belongs inside the address card');
+      assert.equal(await page.locator('#contact a[href*="/maps/dir/"]').count(), 1, 'no duplicate directions button above the contact cards');
+      await page.locator('#copy-address').click();
+      await page.getByRole('status').filter({ hasText: { ENG: 'Address copied', FR: 'Adresse copiée', AR: 'تم نسخ العنوان' }[language] }).waitFor();
+      assert.equal(await page.evaluate(() => navigator.clipboard.readText()), address, 'copy uses the exact, correctly ordered postal address');
+      if (width === 390 && language === 'AR') {
+        await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw new DOMException('Blocked', 'NotAllowedError'); } } }));
+        await page.locator('#copy-address').click();
+        await page.getByRole('status').filter({ hasText: 'تعذّر النسخ' }).waitFor();
+        await page.evaluate(() => { delete navigator.clipboard; });
+        await page.locator('#copy-address').click();
+        await page.getByRole('status').filter({ hasText: 'تم نسخ العنوان' }).waitFor();
+      }
       if (language === 'AR') assert((await credit.innerText()).includes('هذا الموقع صمم بواسطة'));
       await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
       await page.waitForFunction(() => {
@@ -57,10 +92,12 @@ try {
       await page.screenshot({ path: 'test-results/compact-hero.png', animations: 'disabled', timeout: 15000 });
       await page.locator('#about').evaluate(element => element.scrollIntoView());
       await page.screenshot({ path: 'test-results/compact-about.png', animations: 'disabled', timeout: 15000 });
+      await page.locator('#contact').evaluate(element => element.scrollIntoView());
+      await page.screenshot({ path: 'test-results/compact-contact.png', animations: 'disabled', timeout: 15000 });
       await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
       await page.screenshot({ path: 'test-results/compact-footer.png', animations: 'disabled', timeout: 15000 });
     }
-    console.log(`PASS: ${width}px, all three languages: one-line instruction, compact gaps, credit link and unobscured footer`);
+    console.log(`PASS: ${width}px, all three languages: compact layout, paired footer links, copy address, external maps, phone and WhatsApp, unobscured credit`);
     await context.close();
   }
   console.log('All 18 responsive-language layout combinations passed.');

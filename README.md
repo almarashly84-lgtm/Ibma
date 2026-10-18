@@ -21,6 +21,8 @@ The layout suite checks 320, 360, 390, 473, 768, and 1440px widths in Arabic,
 English, and French: a single-line orbit instruction, compact section spacing,
 the designer link, and a footer credit that stays visible above the fixed
 contact bar without duplicate bottom padding.
+It also checks three paired rows of footer links, separate call/WhatsApp targets,
+external Google Maps directions, and address copying with permission-denied feedback.
 
 ## Existing public address
 
