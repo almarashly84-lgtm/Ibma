@@ -31,7 +31,7 @@ export const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen pb-24 bg-[#0B0E14] text-slate-100 flex flex-col selection:bg-amber-500 selection:text-black">
+    <div className="min-h-screen bg-[#0B0E14] text-slate-100 flex flex-col selection:bg-amber-500 selection:text-black">
       <a href="#main-content" className="skip-link">Skip to main content / انتقل إلى المحتوى / Aller au contenu</a>
       {/* Sticky Navigation Bar with Official Logo */}
       <Navbar onOpenBooking={() => handleOpenBooking()} />

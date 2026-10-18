@@ -93,7 +93,10 @@
   background: linear-gradient(145deg, #161D27 0%, #0D1117 100%);
 }
 
-section[id] { scroll-margin-top: 7rem; }
+section[id] { scroll-margin-top: calc(5rem + 8px); }
+@media (min-width: 640px) {
+  section[id] { scroll-margin-top: calc(6rem + 8px); }
+}
 :focus-visible { outline: 3px solid #fbbf24; outline-offset: 4px; }
 .skip-link { position: fixed; top: -200px; left: 1rem; z-index: 10000; padding: 1rem; background: #fbbf24; color: #000; }
 .skip-link:focus { top: 1rem; }

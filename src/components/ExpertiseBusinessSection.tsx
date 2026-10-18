@@ -39,11 +39,11 @@ export const ExpertiseBusinessSection: React.FC<ExpertiseBusinessSectionProps> =
   const activeItem = activeItemIndex !== null ? t.items[activeItemIndex] : null;
 
   return (
-    <section id="business-needs" className="py-16 sm:py-20 bg-[#0B0F17] border-t border-slate-800 relative">
+    <section id="business-needs" className="py-10 sm:py-16 bg-[#0B0F17] border-t border-slate-800 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto space-y-3 mb-10 sm:mb-12">
+        <div className="text-center max-w-3xl mx-auto space-y-3 mb-6 sm:mb-8">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold uppercase tracking-wider">
             {t.badge[language]}
           </div>

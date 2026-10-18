@@ -13,8 +13,6 @@ import {
   ShieldAlert,
   Scale,
   Calendar,
-  Play,
-  Pause,
   ArrowRight,
   Sparkles,
   ShieldCheck
@@ -43,10 +41,10 @@ export const HeroOrbit3D: React.FC<HeroOrbit3DProps> = ({
 }) => {
   const { language, dir } = useLanguage();
   const [rotationAngle, setRotationAngle] = useState<number>(0);
-  const [rotationEnabled, setRotationEnabled] = useState<boolean>(() => !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const [motionAllowed, setMotionAllowed] = useState<boolean>(() => !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const [activeHoveredIndex, setActiveHoveredIndex] = useState<number | null>(null);
   const [viewportWidth, setViewportWidth] = useState(() => window.innerWidth);
-  const isRotating = rotationEnabled && activeHoveredIndex === null;
+  const isRotating = motionAllowed && activeHoveredIndex === null;
 
   // Smooth continuous rotation
   useEffect(() => {
@@ -59,7 +57,7 @@ export const HeroOrbit3D: React.FC<HeroOrbit3DProps> = ({
 
   useEffect(() => {
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const onChange = () => { if (preference.matches) setRotationEnabled(false); };
+    const onChange = () => setMotionAllowed(!preference.matches);
     preference.addEventListener('change', onChange);
     return () => preference.removeEventListener('change', onChange);
   }, []);
@@ -76,7 +74,7 @@ export const HeroOrbit3D: React.FC<HeroOrbit3DProps> = ({
   const orbitRadiusMobile = Math.max(90, (Math.min(360, viewportWidth - 32) - 80) / 2);
 
   return (
-    <section id="hero" className="relative min-h-[90vh] bg-gradient-to-b from-[#080B10] via-[#0E141D] to-[#0A0D13] overflow-hidden pt-6 pb-20 flex flex-col justify-start">
+    <section id="hero" className="relative bg-gradient-to-b from-[#080B10] via-[#0E141D] to-[#0A0D13] overflow-hidden pt-4 pb-10 sm:pt-6 sm:pb-14 flex flex-col justify-start">
       
       {/* Background Decorative Grid and Glows */}
       <div className="absolute inset-0 bg-[radial-gradient(#F59E0B_1px,transparent_1px)] [background-size:32px_32px] opacity-[0.04] pointer-events-none" />
@@ -86,31 +84,21 @@ export const HeroOrbit3D: React.FC<HeroOrbit3DProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full z-10 flex flex-col items-center">
         
         {/* 1. TOP SECTION: 3D Official Transparent Logo & Orbiting Services */}
-        <div className="w-full max-w-4xl flex flex-col items-center justify-center pt-2 pb-6">
+        <div className="w-full max-w-4xl flex flex-col items-center justify-center pb-3 sm:pb-4">
           
-          {/* Controls & Orbit Instruction Bar (Raised significantly higher with generous spacing to prevent any overlap) */}
-          <div className="flex items-center justify-between w-full max-w-xl px-5 py-2.5 mb-12 sm:mb-16 rounded-full bg-slate-900/95 border border-amber-500/40 text-xs text-slate-300 backdrop-blur-md shadow-lg shadow-amber-500/10">
-            <div className="flex items-center gap-2.5">
-              <span className="relative flex h-2.5 w-2.5">
+          {/* One-line instruction, placed just above the service orbit. */}
+          <div className="flex items-center justify-center gap-2 w-full max-w-xl px-2 py-2 mb-3 sm:mb-8 rounded-full bg-slate-900/95 border border-amber-500/40 text-slate-300 backdrop-blur-md shadow-lg shadow-amber-500/10">
+              <span aria-hidden="true" className="relative flex h-1.5 w-1.5 shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
               </span>
-              <span className="font-bold text-white text-xs sm:text-sm tracking-wide">
-                {language === 'ar' ? 'مدار خدمات IBMA التفاعلي • اضغط على أي خدمة' : language === 'fr' ? 'Orbite interactif des services • Cliquez sur un service' : 'Interactive Services Orbit • Click any service'}
+              <span id="orbit-instruction" className="font-bold text-white text-[clamp(11px,3.1vw,14px)] sm:text-sm whitespace-nowrap leading-5">
+                {language === 'ar' ? 'مدار خدمات IBMA التفاعلي • اضغط على أي خدمة' : language === 'fr' ? 'Services IBMA • Cliquez sur un service' : 'IBMA Services Orbit • Click any service'}
               </span>
-            </div>
-            <button
-              onClick={() => setRotationEnabled(!rotationEnabled)}
-              aria-pressed={rotationEnabled}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold transition-all border border-slate-700 hover:border-amber-400/40"
-            >
-              {isRotating ? <Pause className="w-3.5 h-3.5 text-amber-400" /> : <Play className="w-3.5 h-3.5 text-amber-400" />}
-              <span>{isRotating ? (language === 'ar' ? 'إيقاف' : 'Pause') : (language === 'ar' ? 'دوران' : 'Play')}</span>
-            </button>
           </div>
 
           {/* Interactive Orbit Stage */}
-          <div className="relative w-[min(360px,calc(100vw-32px))] h-[360px] sm:w-[600px] sm:h-[600px] flex items-center justify-center perspective-1000 my-4 sm:my-6">
+          <div id="services-orbit" role="group" aria-labelledby="orbit-instruction" className="relative w-[min(360px,calc(100vw-32px))] h-[360px] sm:w-[600px] sm:h-[600px] flex items-center justify-center perspective-1000">
             
             {/* Outer Circular Tracks */}
             <div className="absolute inset-0 rounded-full border border-amber-500/20 shadow-[0_0_60px_rgba(245,158,11,0.08)] pointer-events-none" />
@@ -194,7 +182,7 @@ export const HeroOrbit3D: React.FC<HeroOrbit3DProps> = ({
 
                   {/* Explicit Text Label under/beside the Node (Requested by User) */}
                   <div className="mt-1 max-w-[70px] sm:max-w-[95px] text-center pointer-events-none">
-                    <span className="block text-[9px] sm:text-[11px] font-bold text-slate-200 line-clamp-1 bg-[#0A0D13]/80 px-1 py-0.5 rounded border border-slate-800 shadow">
+                    <span className="text-[9px] sm:text-[11px] font-bold text-slate-200 line-clamp-3 bg-[#0A0D13]/80 px-1 py-0.5 rounded border border-slate-800 shadow">
                       {service.title[language]}
                     </span>
                   </div>
@@ -228,7 +216,7 @@ export const HeroOrbit3D: React.FC<HeroOrbit3DProps> = ({
         </div>
 
         {/* 2. BOTTOM SECTION: Titles, Description & Action Buttons (Positioned below the Orbit) */}
-        <div className="text-center max-w-3xl mx-auto space-y-4 mt-4">
+        <div className="text-center max-w-3xl mx-auto space-y-3">
           
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-amber-500/30 text-xs font-semibold text-amber-400 shadow-lg shadow-amber-500/10">
             <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />

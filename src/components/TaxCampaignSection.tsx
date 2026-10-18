@@ -12,7 +12,7 @@ export const TaxCampaignSection: React.FC<TaxCampaignSectionProps> = ({ onOpenBo
   const t = UI_TEXT.taxCampaign;
 
   return (
-    <section className="py-16 bg-gradient-to-r from-[#0C1017] via-[#161D29] to-[#0C1017] border-y border-amber-500/30 relative overflow-hidden">
+    <section className="py-10 sm:py-14 bg-gradient-to-r from-[#0C1017] via-[#161D29] to-[#0C1017] border-y border-amber-500/30 relative overflow-hidden">
       
       {/* Decorative Glows */}
       <div className="absolute -left-20 top-1/2 -translate-y-1/2 w-80 h-80 bg-amber-500/10 rounded-full blur-[100px] pointer-events-none" />

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { COMPANY_INFO } from '../i18n/translations';
 import {
@@ -14,6 +14,20 @@ interface FloatingContactBarProps {
 
 export const FloatingContactBar: React.FC<FloatingContactBarProps> = ({ onOpenBooking }) => {
   const { language } = useLanguage();
+  const barRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const bar = barRef.current;
+    if (!bar) return;
+    const measure = () => document.documentElement.style.setProperty('--contact-bar-height', `${Math.ceil(bar.getBoundingClientRect().height)}px`);
+    const observer = new ResizeObserver(measure);
+    observer.observe(bar);
+    measure();
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty('--contact-bar-height');
+    };
+  }, []);
 
   return (
     <>
@@ -82,7 +96,8 @@ export const FloatingContactBar: React.FC<FloatingContactBarProps> = ({ onOpenBo
           2. BOTTOM CONTACT BAR WITH TOP GOLDEN BORDER & VERTICAL ICONS
           Full width at the bottom of the page
           ======================================================== */}
-      <footer
+      <nav
+        ref={barRef}
         aria-label="Bottom contact bar"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         className="fixed bottom-0 inset-x-0 w-full z-40 bg-[#050C18] border-t-2 border-amber-400/80 shadow-[0_-8px_30px_rgba(0,0,0,0.9)]"
@@ -146,7 +161,7 @@ export const FloatingContactBar: React.FC<FloatingContactBarProps> = ({ onOpenBo
 
           </div>
         </div>
-      </footer>
+      </nav>
     </>
   );
 };

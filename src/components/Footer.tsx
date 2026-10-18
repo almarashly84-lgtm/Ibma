@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { UI_TEXT, COMPANY_INFO, ASSETS } from '../i18n/translations';
-import { ShieldCheck, ExternalLink, MapPin, Phone, Mail, Clock } from 'lucide-react';
+import { ShieldCheck, MapPin, Phone, Mail, Clock } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   const { language } = useLanguage();
@@ -16,11 +16,11 @@ export const Footer: React.FC = () => {
   };
 
   return (
-    <footer className="bg-[#070A0F] text-slate-300 border-t border-slate-800 pt-16 pb-28 sm:pb-24">
+    <footer id="site-footer" style={{ paddingBottom: 'calc(var(--contact-bar-height, 76px) + 10px)' }} className="bg-[#070A0F] text-slate-300 border-t border-slate-800 pt-8 sm:pt-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Top Section: Brand & Contact Info Side-by-Side */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 pb-12 border-b border-slate-800/80">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 sm:gap-8 pb-6 sm:pb-8 border-b border-slate-800/80">
           
           {/* Brand & Mission (5 cols) */}
           <div className="lg:col-span-5 space-y-4">
@@ -122,25 +122,25 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Bottom Bar: Copyright & Designer Credit Link */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+        <div className="pt-4 space-y-3 text-center text-xs text-slate-400">
           
-          <p>
+          <p className="leading-relaxed">
             © {currentYear} {t.rights[language]} • {t.locationBadge[language]}
           </p>
 
           {/* Designer Credit with direct link to https://www.alaadigital.at */}
-          <div className="flex items-center gap-1.5 p-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-amber-500/50 transition-colors">
-            <span className="text-slate-400">{t.designerSignature[language]}</span>
+          <p id="site-credit" className="flex flex-wrap items-baseline justify-center gap-x-1 gap-y-1 leading-relaxed">
+            <span className="text-slate-400">{t.designerSignature[language]}</span>{' '}
             <a
               href={ASSETS.designerUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-amber-400 font-bold hover:text-amber-300 hover:underline"
+              dir="ltr"
+              className="whitespace-nowrap text-amber-400 font-bold hover:text-amber-300 hover:underline"
             >
               <span>{ASSETS.designerName}</span>
-              <ExternalLink className="w-3.5 h-3.5" />
             </a>
-          </div>
+          </p>
 
         </div>
 
