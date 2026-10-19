@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { UI_TEXT, ASSETS } from '../i18n/translations';
+import { UI_TEXT } from '../i18n/translations';
+import { ASSETS } from '../i18n/assets';
 import { CheckCircle2, Calendar, Stethoscope, HardHat, Truck, Briefcase } from 'lucide-react';
 
 interface SelfEmployedSectionProps {

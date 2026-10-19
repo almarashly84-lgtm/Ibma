@@ -1,14 +1,24 @@
 import assert from 'node:assert/strict';
-import { mkdir, readFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import { chromium } from '@playwright/test';
-import { preview } from 'vite';
 import { availableTimes, bookingUrl, officeToday, validateBooking } from '../src/lib/booking.ts';
+
+// Needs the full site with its server: run `npx wrangler dev --local` first (see README).
 
 const now = new Date('2026-10-19T13:00:00Z');
 const valid = { fullName: 'Test Visitor', email: 'visitor@example.test', phone: '', serviceId: 'test', preferredDate: '2026-10-19', preferredTime: '10:00 AM', notes: 'General consultation' };
-const baseURL = 'http://127.0.0.1:4173';
-const csp = (await readFile('public/_headers', 'utf8')).split('\n')
-  .find((line) => line.trim().startsWith('Content-Security-Policy:')).trim().slice('Content-Security-Policy:'.length).trim();
+const baseURL = process.env.TEST_BASE_URL || 'http://127.0.0.1:8787';
+function nextBookable() {
+  let d = new Date(`${officeToday()}T12:00:00Z`);
+  for (let i = 0; i < 14; i++) {
+    d = new Date(d.getTime() + 86_400_000);
+    const iso = d.toISOString().slice(0, 10);
+    const times = availableTimes(iso);
+    if (times.length) return { date: iso, time: times[0] };
+  }
+  throw new Error('no bookable date');
+}
+const upcoming = nextBookable();
 let passed = 0;
 function pass(name) { passed += 1; console.log(`PASS ${passed}: ${name}`); }
 
@@ -27,8 +37,6 @@ assert(encoded.searchParams.get('text').includes('غير مؤكد'));
 pass('office-time validation, weekends, invalid input, and WhatsApp encoding');
 
 await mkdir('test-results', { recursive: true });
-console.log('Starting local production-preview server...');
-const server = await preview({ preview: { host: '127.0.0.1', port: 4173, strictPort: true } });
 let browser;
 try {
   console.log('Starting Chromium...');
@@ -51,18 +59,16 @@ try {
     page.on('console', (message) => {
       if (message.type() === 'error' && /content security policy|refused to/i.test(message.text())) cspErrors.push(message.text());
     });
-    await page.route(`${baseURL}/`, async (route) => {
-      const response = await route.fetch();
-      await route.fulfill({ response, headers: { ...response.headers(), 'content-security-policy': csp } });
-    });
-    await page.goto(baseURL, { waitUntil: 'domcontentloaded', timeout: 15000 });
+    const response = await page.goto(baseURL, { waitUntil: 'domcontentloaded', timeout: 15000 });
+    assert.match(response.headers()['content-security-policy'], /script-src 'self'/);
     console.log(`${name}: document loaded`);
     await page.locator('h1').waitFor();
     console.log(`${name}: main heading visible`);
-    for (const [button, lang, dir] of [['ENG', 'en', 'ltr'], ['FR', 'fr', 'ltr'], ['AR', 'ar', 'rtl']]) {
+    for (const [button, lang, dir, path] of [['ENG', 'en', 'ltr', '/en/'], ['FR', 'fr', 'ltr', '/fr/'], ['AR', 'ar', 'rtl', '/']]) {
       await page.getByRole('button', { name: button, exact: true }).click();
       assert.equal(await page.locator('html').getAttribute('lang'), lang);
       assert.equal(await page.locator('html').getAttribute('dir'), dir);
+      assert.equal(new URL(page.url()).pathname, path, 'each language has its own address');
     }
     console.log(`${name}: language switching complete`);
     const imageSources = await page.locator('img').evaluateAll((images) =>
@@ -96,23 +102,22 @@ try {
     assert(await trigger.evaluate((element) => element === document.activeElement));
     pass(`${name}: service-dialog keyboard focus, Escape, and focus restoration`);
 
-    await page.clock.setFixedTime(now);
-    await page.locator('#booking-name').fill(valid.fullName);
-    await page.locator('#booking-email').fill(valid.email);
-    await page.locator('#booking-date').fill(valid.preferredDate);
-    await page.locator('#booking-time').selectOption(valid.preferredTime);
-    await page.getByRole('button', { name: 'Prepare WhatsApp request', exact: true }).click();
-    assert((await page.getByRole('status').innerText()).includes('has not been sent or confirmed'));
-    const draft = new URL(await page.getByRole('link', { name: 'Open WhatsApp to send request' }).getAttribute('href'));
+    await page.locator('#booking-name').fill(`Smoke ${name}`);
+    await page.locator('#booking-email').fill(`smoke-${name}@example.test`);
+    await page.locator('#booking-date').fill(upcoming.date);
+    await page.locator('#booking-time').selectOption(upcoming.time);
+    await page.getByRole('button', { name: 'Send appointment request', exact: true }).click();
+    await page.getByText('Your appointment request has been received').waitFor();
+    const draft = new URL(await page.getByRole('link', { name: 'Send the request by WhatsApp' }).getAttribute('href'));
     assert.equal(draft.hostname, 'wa.me');
-    assert(draft.searchParams.get('text').includes(valid.email));
+    assert(draft.searchParams.get('text').includes(`smoke-${name}@example.test`));
     assert(draft.searchParams.get('text').includes('not confirmed'));
-    assert(!(await page.evaluate(() => JSON.stringify(localStorage))).includes(valid.email));
-    assert.deepEqual(posts, []);
-    await page.getByRole('button', { name: 'Prepare another request', exact: true }).click();
+    assert(!(await page.evaluate(() => JSON.stringify(localStorage))).includes('@example.test'), 'no personal data kept in the browser');
+    assert(posts.some((url) => url.endsWith('/api/booking')), 'request saved on the server');
+    await page.getByRole('button', { name: 'Request another appointment', exact: true }).click();
     assert.equal(await page.locator('#booking-name').inputValue(), '');
     assert.equal(await page.locator('#booking-email').inputValue(), '');
-    pass(`${name}: WhatsApp draft only, no submission or contact storage, and form reset`);
+    pass(`${name}: appointment request saved for the office, WhatsApp option, no data kept in the browser, form reset`);
     if (name === 'mobile') {
       await page.setViewportSize({ width: 320, height: 844 });
       await page.evaluate(() => window.scrollTo(0, 0));
@@ -149,12 +154,10 @@ try {
   assert.equal(await movingPage.locator('html').getAttribute('lang'), 'en');
   pass('normal-motion page remains interactive while the service orbit rotates');
   await moving.close();
-  console.log(`All ${passed} verification groups passed. No real booking messages were sent.`);
+  console.log(`All ${passed} verification groups passed. No real WhatsApp messages were sent.`);
 } catch (error) {
   console.error('VERIFICATION FAILED:', error);
   process.exitCode = 1;
 } finally {
-  server.httpServer.closeAllConnections();
   await browser?.close();
-  await new Promise((resolve) => server.httpServer.close(resolve));
 }

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { UI_TEXT, ASSETS } from '../i18n/translations';
+import { UI_TEXT } from '../i18n/translations';
+import { ASSETS } from '../i18n/assets';
 import {
   Calendar,
   CheckCircle2,
@@ -17,7 +18,7 @@ import {
 } from 'lucide-react';
 
 interface ExpertiseBusinessSectionProps {
-  onOpenBooking: (serviceName?: string) => void;
+  onOpenBooking: (serviceId?: string) => void;
 }
 
 const EXPERTISE_ICONS = [
@@ -31,12 +32,22 @@ const EXPERTISE_ICONS = [
   <Scale className="w-5 h-5 text-amber-400" />
 ];
 
+// Which bookable service each capability card belongs to (same order as UI_TEXT.businessNeeds.items).
+const EXPERTISE_SERVICE_IDS = ['business-planning', 'bookkeeping', 'payroll-wsib', 'hst-filing', 'cra-representation', 'business-registration', 'review-engagements', 'income-tax'];
+
 export const ExpertiseBusinessSection: React.FC<ExpertiseBusinessSectionProps> = ({ onOpenBooking }) => {
   const { language } = useLanguage();
   const t = UI_TEXT.businessNeeds;
   const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
 
   const activeItem = activeItemIndex !== null ? t.items[activeItemIndex] : null;
+
+  useEffect(() => {
+    if (activeItemIndex === null) return;
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setActiveItemIndex(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [activeItemIndex]);
 
   return (
     <section id="business-needs" className="py-10 sm:py-16 bg-[#0B0F17] border-t border-slate-800 relative">
@@ -81,7 +92,11 @@ export const ExpertiseBusinessSection: React.FC<ExpertiseBusinessSectionProps> =
             {t.items.map((item, idx) => (
               <div
                 key={idx}
+                role="button"
+                tabIndex={0}
+                aria-label={item.title[language]}
                 onClick={() => setActiveItemIndex(idx)}
+                onKeyDown={(event) => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); setActiveItemIndex(idx); } }}
                 className="group relative p-3.5 sm:p-4 rounded-2xl bg-[#121822] border border-slate-800 hover:border-amber-400/80 hover:bg-[#161F2C] transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-amber-500/15 active:scale-95 cursor-pointer flex flex-col justify-between"
               >
                 <div>
@@ -102,18 +117,18 @@ export const ExpertiseBusinessSection: React.FC<ExpertiseBusinessSectionProps> =
                 <div className="pt-2.5 mt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
                   <span className="text-amber-400 flex items-center gap-1 font-semibold">
                     <ZoomIn className="w-3 h-3" />
-                    <span>{language === 'ar' ? 'زووم' : 'Zoom'}</span>
+                    <span>{{ ar: 'تفاصيل', en: 'Details', fr: 'Détails' }[language]}</span>
                   </span>
 
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onOpenBooking(item.title[language]);
+                      onOpenBooking(EXPERTISE_SERVICE_IDS[idx]);
                     }}
                     className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 hover:bg-amber-400 hover:text-black transition-colors font-bold text-[10px]"
                   >
-                    {language === 'ar' ? 'حجز' : 'Book'}
+                    {{ ar: 'حجز', en: 'Book', fr: 'Réserver' }[language]}
                   </button>
                 </div>
               </div>
@@ -131,6 +146,9 @@ export const ExpertiseBusinessSection: React.FC<ExpertiseBusinessSectionProps> =
           onClick={() => setActiveItemIndex(null)}
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={activeItem.title[language]}
             className="relative w-full max-w-lg bg-[#0F172A] rounded-2xl shadow-2xl border border-amber-500/40 p-6 space-y-5 animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
@@ -142,7 +160,7 @@ export const ExpertiseBusinessSection: React.FC<ExpertiseBusinessSectionProps> =
                 </div>
                 <div>
                   <span className="text-xs font-mono font-bold text-amber-400">
-                    {language === 'ar' ? 'حلول الشركات المعتمدة' : 'Corporate Certified Solution'}
+                    {{ ar: 'حلول الشركات', en: 'Corporate Solutions', fr: 'Solutions d’entreprise' }[language]}
                   </span>
                   <h3 className="text-lg sm:text-xl font-bold text-white mt-0.5">
                     {activeItem.title[language]}
@@ -151,6 +169,9 @@ export const ExpertiseBusinessSection: React.FC<ExpertiseBusinessSectionProps> =
               </div>
 
               <button
+                type="button"
+                autoFocus
+                aria-label={{ ar: 'إغلاق', en: 'Close', fr: 'Fermer' }[language]}
                 onClick={() => setActiveItemIndex(null)}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
               >
@@ -166,9 +187,7 @@ export const ExpertiseBusinessSection: React.FC<ExpertiseBusinessSectionProps> =
               <div className="flex items-center gap-2 text-xs text-amber-400/90 font-medium pt-1">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span>
-                  {language === 'ar'
-                    ? 'خدمة محاسبية احترافية معتمدة وفق المعايير واللوائح الكندية'
-                    : 'Certified professional accounting in full compliance with Canadian laws'}
+                  {{ ar: 'خدمة محاسبية احترافية وفق المعايير واللوائح الكندية', en: 'Professional accounting in line with Canadian rules and standards', fr: 'Comptabilité professionnelle conforme aux règles et normes canadiennes' }[language]}
                 </span>
               </div>
             </div>
@@ -177,14 +196,14 @@ export const ExpertiseBusinessSection: React.FC<ExpertiseBusinessSectionProps> =
             <div className="pt-2 flex items-center gap-3">
               <button
                 onClick={() => {
-                  const serviceName = activeItem.title[language];
+                  const serviceId = EXPERTISE_SERVICE_IDS[activeItemIndex!];
                   setActiveItemIndex(null);
-                  onOpenBooking(serviceName);
+                  onOpenBooking(serviceId);
                 }}
                 className="flex-1 py-3 px-5 rounded-xl font-bold text-sm bg-gradient-to-r from-amber-500 to-amber-600 text-black hover:from-amber-400 hover:to-amber-500 transition-all shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2"
               >
                 <Calendar className="w-4 h-4" />
-                <span>{language === 'ar' ? 'احجز موعد لهذه الخدمة الآن' : 'Book Appointment for this Now'}</span>
+                <span>{{ ar: 'احجز موعدًا لهذه الخدمة الآن', en: 'Book an appointment for this service', fr: 'Réserver un rendez-vous pour ce service' }[language]}</span>
               </button>
             </div>
           </div>

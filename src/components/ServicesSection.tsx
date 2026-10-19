@@ -130,7 +130,7 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
                       onSelectService(service);
                     }}
                     className="p-1 sm:px-2 sm:py-1 rounded-lg text-[11px] sm:text-xs font-semibold text-amber-400 hover:text-amber-200 hover:bg-amber-500/10 flex items-center gap-1 transition-all"
-                    title={language === 'ar' ? 'انقر لتكبير وعرض تفاصيل الخدمة' : 'Click to zoom and view service details'}
+                    title={{ ar: 'انقر لعرض تفاصيل الخدمة', en: 'Click to view service details', fr: 'Cliquez pour voir les détails du service' }[language]}
                   >
                     <ZoomIn className="w-3.5 h-3.5 text-amber-400" />
                     <span>{language === 'ar' ? 'تكبير وتفاصيل' : language === 'fr' ? 'Détails & Zoom' : 'Details & Zoom'}</span>
@@ -143,10 +143,10 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
                       onBookService(service);
                     }}
                     className="p-1.5 sm:px-2.5 sm:py-1 rounded-lg text-[11px] font-bold bg-amber-500/20 text-amber-300 hover:bg-amber-400 hover:text-black border border-amber-500/40 transition-colors flex items-center gap-1"
-                    title={language === 'ar' ? 'احجز مباشرة' : 'Book directly'}
+                    title={{ ar: 'احجز مباشرة', en: 'Book directly', fr: 'Réserver directement' }[language]}
                   >
                     <Calendar className="w-3 h-3" />
-                    <span className="hidden sm:inline">{language === 'ar' ? 'حجز' : 'Book'}</span>
+                    <span className="hidden sm:inline">{{ ar: 'حجز', en: 'Book', fr: 'Réserver' }[language]}</span>
                   </button>
                 </div>
 

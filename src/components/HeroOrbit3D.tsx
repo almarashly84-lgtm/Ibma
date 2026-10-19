@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { SERVICES_LIST, UI_TEXT, ASSETS } from '../i18n/translations';
+import { SERVICES_LIST, UI_TEXT } from '../i18n/translations';
+import { ASSETS } from '../i18n/assets';
+import { SITE } from '../content/apply';
 import { ServiceItem } from '../types';
 import {
   FileSpreadsheet,
@@ -202,7 +204,7 @@ export const HeroOrbit3D: React.FC<HeroOrbit3DProps> = ({
                       {service.description[language]}
                     </p>
                     <div className="mt-2 pt-1 flex items-center justify-between text-[10px] text-amber-300 font-semibold">
-                      <span>{language === 'ar' ? 'انقر للتفاصيل والحجز' : 'Click to View & Book'}</span>
+                      <span>{{ ar: 'انقر للتفاصيل والحجز', en: 'Click to View & Book', fr: 'Cliquez pour voir et réserver' }[language]}</span>
                       <ArrowRight className={`w-3 h-3 ${dir === 'rtl' ? 'rotate-180' : ''}`} />
                     </div>
                   </div>
@@ -224,17 +226,8 @@ export const HeroOrbit3D: React.FC<HeroOrbit3DProps> = ({
           </div>
 
           <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight leading-tight">
-            {language === 'ar' ? (
-              <>
-                شريكك المالي والضريبي المعتمد <br />
-                <span className="gold-text-gradient">IBMA Accounting and Tax Services</span>
-              </>
-            ) : (
-              <>
-                Your Certified Tax & Financial Partner <br />
-                <span className="gold-text-gradient">IBMA Accounting and Tax Services</span>
-              </>
-            )}
+            {SITE.hero.h1[language]} <br />
+            <span className="gold-text-gradient">IBMA Accounting and Tax Services</span>
           </h1>
 
           <p className="text-sm sm:text-base text-slate-300 max-w-2xl mx-auto leading-relaxed">

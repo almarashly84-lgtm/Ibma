@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { NAV_ITEMS, COMPANY_INFO, ASSETS, UI_TEXT } from '../i18n/translations';
-import { Phone, Calendar, Menu, X, Globe, Shield } from 'lucide-react';
+import { NAV_ITEMS, COMPANY_INFO, UI_TEXT } from '../i18n/translations';
+import { ASSETS } from '../i18n/assets';
+import { Phone, Menu, X, Globe } from 'lucide-react';
+import { SITE } from '../content/apply';
+import { track } from '../lib/track';
+import { pathFor } from '../lib/route';
 import { Language } from '../types';
 
 interface NavbarProps {
@@ -9,7 +13,7 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ onOpenBooking }) => {
-  const { language, setLanguage, dir } = useLanguage();
+  const { language, setLanguage } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const scrollTo = (id: string) => {
@@ -17,6 +21,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenBooking }) => {
     const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      window.location.href = `${pathFor(language, 'home')}#${id}`;
     }
   };
 
@@ -42,7 +48,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenBooking }) => {
             </div>
             <div className="hidden md:flex flex-col">
               <span className="text-xl font-black tracking-wider text-white flex items-center gap-1.5">
-                IBMA <span className="text-amber-400 text-xs font-bold px-2 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/30">CRA E-Filer</span>
+                IBMA {SITE.trust.showCraBadge && <span className="text-amber-400 text-xs font-bold px-2 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/30">CRA E-Filer</span>}
               </span>
               <span className="text-xs font-semibold text-slate-400 tracking-wide">
                 Accounting & Tax Services
@@ -90,6 +96,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenBooking }) => {
             {/* Direct Phone Call Button */}
             <a
               href={`tel:${COMPANY_INFO.phoneClean}`}
+              onClick={() => track('call', language)}
               className="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-100 border border-slate-700 hover:border-amber-500/60 hover:text-amber-300 transition-all shadow-sm"
               dir="ltr"
             >
@@ -132,6 +139,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenBooking }) => {
           <div className="pt-3 border-t border-slate-800 flex flex-col gap-2">
             <a
               href={`tel:${COMPANY_INFO.phoneClean}`}
+              onClick={() => track('call', language)}
               className="flex items-center justify-center gap-2 py-2.5 rounded-lg bg-slate-800 text-slate-200 text-sm font-semibold border border-slate-700"
               dir="ltr"
             >

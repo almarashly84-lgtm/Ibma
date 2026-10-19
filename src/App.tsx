@@ -15,12 +15,19 @@ import { Footer } from './components/Footer';
 import { FloatingContactBar } from './components/FloatingContactBar';
 import { ServiceItem } from './types';
 import { SERVICES_LIST } from './i18n/translations';
+import { NewsletterSection } from './components/NewsletterSection';
+import { PrivacyPage } from './components/PrivacyPage';
+import { useLanguage } from './context/LanguageContext';
+import { track } from './lib/track';
+import { SITE } from './content/apply';
 
 export const AppContent: React.FC = () => {
+  const { language, page } = useLanguage();
   const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
   const [preselectedBookingService, setPreselectedBookingService] = useState<ServiceItem | null>(null);
 
   const handleOpenBooking = (service?: ServiceItem) => {
+    track('booking_open', language);
     if (service) {
       setPreselectedBookingService(service);
     }
@@ -29,6 +36,8 @@ export const AppContent: React.FC = () => {
       el.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  if (page === 'privacy') return <PrivacyPage />;
 
   return (
     <div className="min-h-screen bg-[#0B0E14] text-slate-100 flex flex-col selection:bg-amber-500 selection:text-black">
@@ -40,7 +49,7 @@ export const AppContent: React.FC = () => {
       <main id="main-content" tabIndex={-1} className="flex-1">
         {/* 1. Hero Section with Official 3D Logo & Orbiting Services */}
         <HeroOrbit3D
-          onSelectService={(service) => setSelectedService(service)}
+          onSelectService={(service) => { track('service_open', language); setSelectedService(service); }}
           onOpenBooking={() => handleOpenBooking()}
         />
 
@@ -49,18 +58,17 @@ export const AppContent: React.FC = () => {
 
         {/* 3. Our Expertise Meet All Your Business Needs Section */}
         <ExpertiseBusinessSection
-          onOpenBooking={(srvName) => {
-            const matched = SERVICES_LIST.find((s) => s.title.ar === srvName || s.title.en === srvName);
-            handleOpenBooking(matched);
+          onOpenBooking={(serviceId) => {
+            handleOpenBooking(SERVICES_LIST.find((s) => s.id === serviceId));
           }}
         />
 
         {/* 4. Need a Hand with Your Taxes?! Campaign Section */}
-        <TaxCampaignSection onOpenBooking={() => handleOpenBooking()} />
+        {SITE.campaign.enabled && <TaxCampaignSection onOpenBooking={() => handleOpenBooking()} />}
 
         {/* 5. 9 Accounting Services 3-Column Compact Grid Section */}
         <ServicesSection
-          onSelectService={(service) => setSelectedService(service)}
+          onSelectService={(service) => { track('service_open', language); setSelectedService(service); }}
           onBookService={(service) => handleOpenBooking(service)}
         />
 
@@ -78,6 +86,9 @@ export const AppContent: React.FC = () => {
 
         {/* 9. Compact Office Location, Hours & Direct Contact Section */}
         <ContactSection />
+
+        {/* 10. Subscribe to offers */}
+        {SITE.newsletter.enabled && <NewsletterSection />}
       </main>
 
       {/* Footer with Designer Credit & CRA Badges */}

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { COMPANY_INFO } from '../i18n/translations';
+import { track } from '../lib/track';
 import {
   MessageCircle,
   Phone,
@@ -40,23 +41,29 @@ export const FloatingContactBar: React.FC<FloatingContactBarProps> = ({ onOpenBo
         aria-label="Social media floating capsule"
         className="fixed top-1/2 -translate-y-1/2 left-2 sm:left-3.5 z-50 hidden sm:flex flex-col items-center gap-2.5 sm:gap-3 py-3 px-1.5 sm:px-2 rounded-full bg-[#0D121B]/95 backdrop-blur-md border border-amber-500/50 shadow-[0_4px_30px_rgba(0,0,0,0.85)] transition-all hover:border-amber-400"
       >
-        {/* Facebook */}
-        <a
-          href={COMPANY_INFO.facebookUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          title="Facebook"
-          className="text-amber-400 hover:text-amber-200 hover:scale-120 transition-all p-1"
-        >
-          <span aria-hidden="true" className="w-4 h-4 sm:w-5 sm:h-5 block font-bold text-center">f</span>
-        </a>
-
-        <div className="w-4 h-px bg-amber-500/30 my-0.5" />
+        {/* Facebook (hidden when no link is set in the dashboard) */}
+        {COMPANY_INFO.facebookUrl && (
+          <>
+            <a
+              href={COMPANY_INFO.facebookUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Facebook"
+              aria-label="Facebook"
+              className="text-amber-400 hover:text-amber-200 hover:scale-120 transition-all p-1"
+            >
+              <span aria-hidden="true" className="w-4 h-4 sm:w-5 sm:h-5 block font-bold text-center">f</span>
+            </a>
+            <div className="w-4 h-px bg-amber-500/30 my-0.5" />
+          </>
+        )}
 
         {/* Email */}
         <a
           href={`mailto:${COMPANY_INFO.email}`}
+          onClick={() => track('email', language)}
           title="Email"
+          aria-label="Email"
           className="text-amber-400 hover:text-amber-200 hover:scale-120 transition-all p-1"
         >
           <Mail className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -67,7 +74,9 @@ export const FloatingContactBar: React.FC<FloatingContactBarProps> = ({ onOpenBo
           href={COMPANY_INFO.whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => track('whatsapp', language)}
           title="WhatsApp"
+          aria-label="WhatsApp"
           className="text-amber-400 hover:text-emerald-400 hover:scale-120 transition-all p-1"
         >
           <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -76,7 +85,9 @@ export const FloatingContactBar: React.FC<FloatingContactBarProps> = ({ onOpenBo
         {/* Direct Call */}
         <a
           href={`tel:${COMPANY_INFO.phoneClean}`}
+          onClick={() => track('call', language)}
           title="Phone"
+          aria-label="Phone"
           className="text-amber-400 hover:text-amber-200 hover:scale-120 transition-all p-1"
         >
           <Phone className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -85,7 +96,8 @@ export const FloatingContactBar: React.FC<FloatingContactBarProps> = ({ onOpenBo
         {/* Quick Booking Anchor */}
         <button
           onClick={onOpenBooking}
-          title={language === 'ar' ? 'حجز موعد' : 'Book Appointment'}
+          title={{ ar: 'حجز موعد', en: 'Book Appointment', fr: 'Prendre rendez-vous' }[language]}
+          aria-label={{ ar: 'حجز موعد', en: 'Book Appointment', fr: 'Prendre rendez-vous' }[language]}
           className="text-black bg-amber-400 hover:bg-amber-300 rounded-full p-1.5 hover:scale-115 transition-all shadow-md shadow-amber-500/30 mt-0.5"
         >
           <CalendarCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -110,19 +122,21 @@ export const FloatingContactBar: React.FC<FloatingContactBarProps> = ({ onOpenBo
               href={COMPANY_INFO.whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => track('whatsapp', language)}
               className="flex flex-col items-center justify-center gap-1 group py-1 transition-transform hover:scale-105"
             >
               <div className="text-[#25D366] group-hover:brightness-110">
                 <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <span className="text-[#25D366] font-bold text-[11px] sm:text-xs tracking-wide">
-                {language === 'ar' ? 'واتساب' : 'WhatsApp'}
+                {language === 'ar' ? 'واتساب' : 'WhatsApp' /* same word in EN and FR */}
               </span>
             </a>
 
             {/* Direct Call */}
             <a
               href={`tel:${COMPANY_INFO.phoneClean}`}
+              onClick={() => track('call', language)}
               className="flex flex-col items-center justify-center gap-1 group py-1 transition-transform hover:scale-105"
             >
               <div className="text-white group-hover:text-slate-200">
@@ -136,13 +150,14 @@ export const FloatingContactBar: React.FC<FloatingContactBarProps> = ({ onOpenBo
             {/* Email */}
             <a
               href={`mailto:${COMPANY_INFO.email}`}
+              onClick={() => track('email', language)}
               className="flex flex-col items-center justify-center gap-1 group py-1 transition-transform hover:scale-105"
             >
               <div className="text-white group-hover:text-slate-200">
                 <Mail className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <span className="text-white font-bold text-[11px] sm:text-xs tracking-wide">
-                {language === 'ar' ? 'بريد' : 'E-Mail'}
+                {{ ar: 'بريد', en: 'Email', fr: 'Courriel' }[language]}
               </span>
             </a>
 

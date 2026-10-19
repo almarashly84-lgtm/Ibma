@@ -20,6 +20,7 @@ export interface BookingFormData {
   preferredDate: string;
   preferredTime: string;
   notes: string;
+  subscribe?: boolean;
 }
 
 export interface WorkingHour {

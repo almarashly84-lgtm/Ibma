@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "types": ["@cloudflare/workers-types"]
+  },
+  "include": ["./**/*.ts", "../src/content/schema.ts", "../src/content/consent.ts", "../src/content/privacyDefault.ts", "../src/lib/booking.ts", "../src/lib/hours.ts", "../src/lib/route.ts", "../src/i18n/translations.ts", "../src/types/**/*.ts"]
+}

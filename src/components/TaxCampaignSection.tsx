@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { UI_TEXT, ASSETS } from '../i18n/translations';
+import { UI_TEXT } from '../i18n/translations';
+import { ASSETS } from '../i18n/assets';
 import { Calendar, CheckCircle2, Clock, Sparkles } from 'lucide-react';
 
 interface TaxCampaignSectionProps {
@@ -37,7 +38,7 @@ export const TaxCampaignSection: React.FC<TaxCampaignSectionProps> = ({ onOpenBo
             
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>CRA Tax Support & Peace of Mind</span>
+              <span>{{ ar: 'دعم ضريبي وراحة بال', en: 'CRA Tax Support & Peace of Mind', fr: 'Soutien fiscal et tranquillité d’esprit' }[language]}</span>
             </div>
 
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight leading-tight">

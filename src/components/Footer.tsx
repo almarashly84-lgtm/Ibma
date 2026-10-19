@@ -1,7 +1,10 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { UI_TEXT, COMPANY_INFO, ASSETS } from '../i18n/translations';
+import { UI_TEXT, COMPANY_INFO } from '../i18n/translations';
+import { ASSETS } from '../i18n/assets';
 import { ShieldCheck } from 'lucide-react';
+import { SITE } from '../content/apply';
+import { pathFor } from '../lib/route';
 
 export const Footer: React.FC = () => {
   const { language } = useLanguage();
@@ -12,6 +15,9 @@ export const Footer: React.FC = () => {
     const el = document.getElementById(id);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      // On the privacy page the sections are on the home page.
+      window.location.href = `${pathFor(language, 'home')}#${id}`;
     }
   };
 
@@ -44,10 +50,12 @@ export const Footer: React.FC = () => {
               {COMPANY_INFO.subtitle[language]}
             </p>
 
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-amber-500/30 text-xs text-amber-300">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Authorized CRA Representative & E-Filer</span>
-            </div>
+            {SITE.trust.showCraBadge && (
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-amber-500/30 text-xs text-amber-300">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" aria-hidden="true" />
+                <span>{SITE.trust.craBadge[language]}</span>
+              </div>
+            )}
           </div>
 
           <nav id="footer-navigation" aria-label={language === 'ar' ? 'أقسام الموقع' : language === 'fr' ? 'Navigation du site' : 'Site sections'} className="lg:col-span-5 space-y-2">
@@ -97,17 +105,22 @@ export const Footer: React.FC = () => {
             © {currentYear} {t.rights[language]} • {t.locationBadge[language]}
           </p>
 
-          {/* Designer Credit with direct link to https://www.alaadigital.at */}
-          <p id="site-credit" className="flex flex-wrap items-baseline justify-center gap-x-1 gap-y-1 leading-relaxed">
-            <span className="text-slate-400">{t.designerSignature[language]}</span>{' '}
+          <p>
+            <a id="privacy-link" href={pathFor(language, 'privacy')} className="inline-flex min-h-11 items-center text-slate-300 underline underline-offset-4 hover:text-amber-300">
+              {{ ar: 'سياسة الخصوصية', en: 'Privacy Policy', fr: 'Politique de confidentialité' }[language]}
+            </a>
+          </p>
+
+          {/* Designer credit (English on every language) linking to https://www.alaadigital.at */}
+          <p id="site-credit" dir="ltr" className="flex flex-wrap items-baseline justify-center gap-x-1 gap-y-1 leading-relaxed">
+            <span className="text-slate-400">by</span>
             <a
               href={ASSETS.designerUrl}
               target="_blank"
               rel="noopener noreferrer"
-              dir="ltr"
               className="whitespace-nowrap text-amber-400 font-bold hover:text-amber-300 hover:underline"
             >
-              <span>{ASSETS.designerName}</span>
+              {ASSETS.designerName}
             </a>
           </p>
 

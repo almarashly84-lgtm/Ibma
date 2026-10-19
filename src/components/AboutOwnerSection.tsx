@@ -1,6 +1,8 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { UI_TEXT, COMPANY_INFO } from '../i18n/translations';
+import { UI_TEXT } from '../i18n/translations';
+import { ASSETS } from '../i18n/assets';
+import { SITE } from '../content/apply';
 import {
   Award,
   ShieldCheck,
@@ -41,16 +43,18 @@ export const AboutOwnerSection: React.FC<AboutOwnerSectionProps> = ({ onOpenBook
                 <span className="portrait-orbit portrait-orbit-outer" aria-hidden="true" />
                 <span className="portrait-orbit portrait-orbit-inner" aria-hidden="true" />
                 <img
-                  src={COMPANY_INFO.ownerPhoto}
+                  src={SITE.about.photo || ASSETS.ownerPhoto}
                   alt={`${t.name[language]} — ${t.role[language]}`}
                   className="portrait-photo"
                   loading="lazy"
                 />
               </div>
-              <div className="mt-3 flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-black/20 text-amber-100 border border-amber-400/20 text-[11px] sm:text-xs text-center font-bold">
-                <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-400" />
-                <span>{t.verifiedBadge[language]}</span>
-              </div>
+              {SITE.about.showVerifiedBadge && (
+                <div className="mt-3 flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-black/20 text-amber-100 border border-amber-400/20 text-[11px] sm:text-xs text-center font-bold">
+                  <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-400" aria-hidden="true" />
+                  <span>{t.verifiedBadge[language]}</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -69,11 +73,11 @@ export const AboutOwnerSection: React.FC<AboutOwnerSectionProps> = ({ onOpenBook
             {/* Bio Paragraphs */}
             <div className="space-y-3 text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
               <p>{t.bioP1[language]}</p>
-              <p>{t.bioP2[language]}</p>
+              {t.bioP2[language] && <p>{t.bioP2[language]}</p>}
             </div>
 
             {/* Stats Counter Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+            {t.stats.length > 0 && <div className={`grid grid-cols-2 ${t.stats.length >= 4 ? 'sm:grid-cols-4' : t.stats.length === 3 ? 'sm:grid-cols-3' : ''} gap-3 pt-4 border-t border-slate-200 dark:border-slate-700`}>
               {t.stats.map((stat, i) => (
                 <div key={i} className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-center shadow-sm">
                   <span className="text-2xl sm:text-3xl font-extrabold text-[#0F2847] dark:text-amber-400 font-sans block">
@@ -84,7 +88,7 @@ export const AboutOwnerSection: React.FC<AboutOwnerSectionProps> = ({ onOpenBook
                   </span>
                 </div>
               ))}
-            </div>
+            </div>}
 
             {/* Action CTA */}
             <div className="pt-2">

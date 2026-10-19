@@ -6,7 +6,11 @@ import { preview } from 'vite';
 const origin = process.env.TEST_BASE_URL || 'http://127.0.0.1:4174';
 const server = process.env.TEST_BASE_URL ? null : await preview({ preview: { host: '127.0.0.1', port: 4174, strictPort: true } });
 await mkdir('test-results', { recursive: true });
-const browser = await chromium.launch({ timeout: 15000, args: ['--disable-gpu'] });
+const browser = await chromium.launch({
+  timeout: 15000,
+  ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}),
+  args: ['--disable-gpu'],
+});
 try {
   for (const width of [320, 360, 390, 473, 768, 1440]) {
     const context = await browser.newContext({ viewport: { width, height: width < 640 ? 844 : 1000 }, reducedMotion: 'reduce', permissions: ['clipboard-read', 'clipboard-write'] });
@@ -48,9 +52,10 @@ try {
       assert.equal(portrait.transform, 'none', 'the person does not rotate');
       assert.equal(await page.getByRole('button', { name: /^(Pause|Play|إيقاف|دوران)$/ }).count(), 0);
       const credit = page.locator('#site-credit');
-      const name = credit.getByRole('link', { name: 'Alaa Eddin Digital', exact: true });
+      const name = credit.getByRole('link', { name: 'Alaa Eddin Digital Media', exact: true });
       assert.equal(await name.getAttribute('href'), 'https://www.alaadigital.at');
-      assert.equal((await credit.innerText()).match(/Alaa Eddin Digital/g)?.length, 1);
+      assert.equal((await credit.innerText()).match(/Alaa Eddin Digital Media/g)?.length, 1);
+      assert.equal((await credit.innerText()).replace(/\s+/g, ' ').trim(), 'by Alaa Eddin Digital Media', 'English credit in every language');
       assert.equal(await page.locator('#site-footer a[href^="tel:"], #site-footer a[href^="mailto:"]').count(), 0, 'no repeated contact links in footer');
       const links = await page.locator('#footer-navigation li').evaluateAll(items => items.map(item => {
         const rect = item.getBoundingClientRect();
@@ -94,7 +99,6 @@ try {
         await page.locator('#copy-address').click();
         await page.getByRole('status').filter({ hasText: 'تم نسخ العنوان' }).waitFor();
       }
-      if (language === 'AR') assert((await credit.innerText()).includes('هذا الموقع صمم بواسطة'));
       await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
       await page.waitForFunction(() => {
         const bar = document.querySelector('nav[aria-label="Bottom contact bar"]').getBoundingClientRect();

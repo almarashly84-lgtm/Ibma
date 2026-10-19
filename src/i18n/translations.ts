@@ -1,19 +1,6 @@
 import { ServiceItem, CompanyInfo, NavItem, WorkingHour } from '../types';
-import logoUrl from '../assets/ibma-logo.webp';
-import ownerUrl from '../assets/accountant-ibrahim.webp';
-import businessNeedsUrl from '../assets/business-needs.webp';
-import selfEmployedUrl from '../assets/self-employed.webp';
-import taxCampaignUrl from '../assets/tax-campaign.webp';
 
-export const ASSETS = {
-  officialLogo: logoUrl,
-  ownerPhoto: ownerUrl,
-  businessNeedsImage: businessNeedsUrl,
-  selfEmployedImage: selfEmployedUrl,
-  taxCampaignImage: taxCampaignUrl,
-  designerUrl: 'https://www.alaadigital.at',
-  designerName: 'Alaa Eddin Digital'
-};
+// Plain data only (no image imports) so the server can share these defaults.
 
 export const COMPANY_INFO: CompanyInfo = {
   name: 'IBMA Accounting Ltd',
@@ -28,7 +15,6 @@ export const COMPANY_INFO: CompanyInfo = {
   whatsappUrl: 'https://wa.me/16138800300',
   email: 'info@ibmaaccounting.ca',
   facebookUrl: 'https://www.facebook.com/ibmaaccounting',
-  ownerPhoto: ASSETS.ownerPhoto,
   mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2804.283182858169!2d-75.7262456!3d45.3430154!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4cce068f6bfdae1f%3A0xc3dc8369527ecb82!2s30%20Concourse%20Gate%20unit%20102%2C%20Nepean%2C%20ON%20K2E%207V7!5e0!3m2!1sen!2sca!4v1700000000000!5m2!1sen!2sca',
   workingHours: {
     weekdays: {
@@ -550,16 +536,16 @@ export const UI_TEXT = {
       en: 'Fill out the form below to lock in your appointment. Our team will contact you promptly to confirm.',
       fr: 'Remplissez le formulaire ci-dessous. Notre équipe vous contactera rapidement pour confirmer.'
     },
-    nameLabel: { ar: 'الاسم الكامل *', en: 'Full Name *', fr: 'Nom Complet *' },
+    nameLabel: { ar: 'الاسم الكامل', en: 'Full Name', fr: 'Nom complet' },
     namePlaceholder: { ar: 'مثال: محمد أحمد', en: 'e.g. John Doe', fr: 'ex: Jean Dupont' },
-    phoneLabel: { ar: 'رقم الهاتف *', en: 'Phone Number *', fr: 'Numéro de Téléphone *' },
+    phoneLabel: { ar: 'رقم الهاتف', en: 'Phone Number', fr: 'Numéro de téléphone' },
     phonePlaceholder: { ar: '+1 (613) ...', en: '+1 (613) ...', fr: '+1 (613) ...' },
-    emailLabel: { ar: 'البريد الإلكتروني *', en: 'Email Address *', fr: 'Adresse Courriel *' },
+    emailLabel: { ar: 'البريد الإلكتروني', en: 'Email Address', fr: 'Adresse courriel' },
     emailPlaceholder: { ar: 'name@example.com', en: 'name@example.com', fr: 'nom@exemple.com' },
-    serviceLabel: { ar: 'الخدمة المطلوبة *', en: 'Select Service *', fr: 'Service Requis *' },
+    serviceLabel: { ar: 'الخدمة المطلوبة', en: 'Select Service', fr: 'Service requis' },
     selectPlaceholder: { ar: '-- اختر الخدمة المحاسبية --', en: '-- Select Accounting Service --', fr: '-- Sélectionner un Service --' },
-    dateLabel: { ar: 'التاريخ المفضل *', en: 'Preferred Date *', fr: 'Date Souhaitée *' },
-    timeLabel: { ar: 'الوقت المناسب *', en: 'Preferred Time *', fr: 'Heure Souhaitée *' },
+    dateLabel: { ar: 'التاريخ المفضل', en: 'Preferred Date', fr: 'Date souhaitée' },
+    timeLabel: { ar: 'الوقت المناسب', en: 'Preferred Time', fr: 'Heure souhaitée' },
     notesLabel: { ar: 'ملاحظات أو تفاصيل إضافية', en: 'Additional Notes or Questions', fr: 'Notes ou Détails Supplémentaires' },
     notesPlaceholder: {
       ar: 'اكتب بإيجاز عن طبيعة استفسارك أو وضع شركتك الضريبي...',

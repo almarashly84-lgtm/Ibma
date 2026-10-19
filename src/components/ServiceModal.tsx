@@ -93,7 +93,7 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({
   const detailedDescription =
     service.fullDesc?.[language] ||
     service.description?.[language] ||
-    (language === 'ar' ? 'خدمة محاسبية وضريبية متكاملة تقدمها شركة IBMA Accounting Ltd' : 'Comprehensive accounting and tax service by IBMA Accounting Ltd');
+    ({ ar: 'خدمة محاسبية وضريبية متكاملة تقدمها شركة IBMA Accounting Ltd', en: 'Comprehensive accounting and tax service by IBMA Accounting Ltd', fr: 'Service comptable et fiscal complet offert par IBMA Accounting Ltd' }[language]);
 
   const benefitsList = service.benefits?.[language] || [];
 
@@ -121,7 +121,7 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="px-2 py-0.5 rounded-full text-[11px] font-black bg-amber-500 text-black shadow-sm">
-                  {language === 'ar' ? `الخدمة #${service.number}` : `Service #${service.number}`}
+                  {`${{ ar: 'الخدمة', en: 'Service', fr: 'Service' }[language]} #${service.number}`}
                 </span>
                 <span className="text-[11px] text-amber-300 font-mono tracking-wider">
                   IBMA Accounting Ltd
@@ -162,7 +162,7 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({
             <div className="bg-[#121927] p-4 sm:p-5 rounded-2xl border border-slate-800">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3 flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-emerald-400" />
-                <span>{t.keyAdvantages?.[language] || (language === 'ar' ? 'أبرز المزايا والمخرجات' : 'Key Advantages')}</span>
+                <span>{t.keyAdvantages?.[language] || ({ ar: 'أبرز المزايا', en: 'Key Advantages', fr: 'Avantages clés' }[language])}</span>
               </h4>
               <ul className="space-y-2.5">
                 {benefitsList.map((benefit, idx) => (
@@ -178,7 +178,7 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({
           {/* Direct Phone Assistance Prompt */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs text-slate-300 bg-amber-500/10 p-3.5 rounded-xl border border-amber-500/30">
             <span className="font-medium">
-              {language === 'ar' ? 'هل لديك أسئلة محددة عن متطلبات هذه الخدمة؟ تواصل معنا مباشرة:' : 'Questions regarding this service? Call us directly:'}
+              {{ ar: 'هل لديك أسئلة محددة عن متطلبات هذه الخدمة؟ تواصل معنا مباشرة:', en: 'Questions regarding this service? Call us directly:', fr: 'Des questions sur ce service? Appelez-nous directement :' }[language]}
             </span>
             <a
               href={`tel:${COMPANY_INFO.phoneClean}`}
@@ -199,7 +199,7 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({
             type="button"
             className="w-full sm:w-auto px-5 py-2.5 text-xs sm:text-sm font-semibold text-slate-300 hover:text-white hover:bg-slate-800 rounded-xl transition-colors border border-slate-700/80"
           >
-            {t.close?.[language] || (language === 'ar' ? 'إغلاق' : 'Close')}
+            {t.close?.[language] || ({ ar: 'إغلاق', en: 'Close', fr: 'Fermer' }[language])}
           </button>
 
           <button
@@ -211,7 +211,7 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({
             className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 text-xs sm:text-sm font-bold text-black bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-400 hover:from-amber-300 hover:to-amber-500 rounded-xl shadow-lg shadow-amber-500/20 active:scale-95 transition-all"
           >
             <Calendar className="w-4 h-4 text-black" />
-            <span>{t.instantBook?.[language] || (language === 'ar' ? 'احجز هذه الخدمة الآن' : 'Book This Service Now')}</span>
+            <span>{t.instantBook?.[language] || ({ ar: 'احجز هذه الخدمة الآن', en: 'Book This Service Now', fr: 'Réserver ce service' }[language])}</span>
           </button>
         </div>
 

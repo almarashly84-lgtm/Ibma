@@ -1,57 +1,62 @@
-# IBMA Accounting
+# IBMA Accounting — website + dashboard
 
-React + TypeScript + Vite source recovered from the repository's own historical source archive. The existing black/gold design and Arabic, English, and French content are retained.
+Website for IBMA Accounting Ltd (Ottawa) in Arabic, English and French, with a dashboard at `/admin`.
+Runs on **Cloudflare Workers** (Worker `ibma`) with a **D1** database (`ibma-db`) and **R2** storage (`ibma-media`).
 
-## Local verification
+- Public address: https://ibma.almarashly84.workers.dev/ (Production follows `main`)
+- Languages have their own addresses: `/` (العربية), `/en/`, `/fr/` and privacy pages `/privacy`, `/en/privacy`, `/fr/privacy`.
 
-The committed lockfile uses public npm tarball URLs so Cloudflare can install
-the same integrity-checked packages without access to a local/private registry.
+## What the website does
 
-Use Node 24.13.0 (or a supported Node version >=22.12).
+| Part | Behaviour |
+|---|---|
+| Appointment form | Saves the request for the office (dashboard → طلبات المواعيد) and offers to send it by WhatsApp too. Validates office hours in Ottawa time. Optional, unticked box to subscribe to offers. |
+| Subscribe section | «اشترك لتصلك عروضنا»: name + email + required consent box (CASL). The exact consent wording and date are stored. |
+| Unsubscribe | Each subscriber has a private link `/unsubscribe?t=…` (in the CSV export). Opening it shows a confirmation; mail apps can also unsubscribe in one click (POST). |
+| Privacy policy | Canadian policy (PIPEDA/CASL) in 3 languages, editable from the dashboard. |
+| Statistics | Daily anonymous totals only (visits, clicks). No cookies, no names, bots not counted. |
+| Map | Google map loads only after the visitor presses «عرض الخريطة». |
+| Fonts | Served from the site itself (no Google Fonts request). |
+| SEO | Per-language title/description, canonical + hreflang, `sitemap.xml`, `robots.txt`, share image `og-image.png`, structured data with opening hours. |
+| Footer | English credit `by Alaa Eddin Digital Media` → https://www.alaadigital.at |
+
+## Dashboard `/admin`
+
+Tabs: الإحصائيات · طلبات المواعيد · المشتركون · الخدمات · الحملة الضريبية · التواصل وساعات العمل · عن المحاسب · النصوص وSEO · سياسة الخصوصية · الأمان.
+
+There is no link to it on the website; open `/admin` after the site address.
+
+**Security:** PBKDF2 password hash · forced change of the temporary password · HttpOnly/Secure/SameSite=Strict cookie, 7 days · lock 15 min after 5 wrong passwords · cross-site request blocking · server-side validation of every field · uploaded images checked by content · CSV formula neutralising · text only (no HTML) · strict CSP · IP addresses only as salted hashes, deleted within 48 h · requests older than 24 months deleted daily (cron).
+
+## First-time setup (once)
+
+1. Cloudflare → Workers & Pages → `ibma` → Settings → Variables and Secrets → **Add** → type **Secret**:
+   `ADMIN_INITIAL_PASSWORD` = a temporary password (not used anywhere else).
+2. Open `https://ibma.almarashly84.workers.dev/admin`, log in with it, then choose a personal password (required).
+3. The temporary secret can then be deleted from Cloudflare.
+
+## Before handing over to the client (to confirm with IBMA)
+
+- [ ] «Authorized CRA Representative & E-Filer» badges (dashboard → النصوص وSEO / عن المحاسب): keep only if true.
+- [ ] Numbers in «عن المحاسب» (15+ years, 2,500+, 850+, 99.4%) must be real.
+- [ ] «نرد خلال 24 ساعة» and «موقف سيارات مجاني» in the contact section.
+- [ ] Privacy policy reviewed by IBMA (privacy contact person, wording).
+- [ ] Original logo file: the current logo image shows a cut tagline («Serv.cc»).
+- [ ] Custom domain: when chosen, add it in Cloudflare (Settings → Domains & Routes); SEO tags follow the address automatically.
+- [ ] The old Pages copy `ibma-accounting-review.pages.dev` has no server/database; delete it to avoid duplicate content in Google.
+- [ ] Register the site in Google Search Console and submit `/sitemap.xml`.
+
+## Development
 
 ```sh
 npm ci
-npm run build
+npm run build                      # type checks (site + server) and builds ./dist
+printf 'ADMIN_INITIAL_PASSWORD=Local-Test-Only-2026\n' > .dev.vars
+npx wrangler dev --local           # http://127.0.0.1:8787 with a local database
 npx playwright install chromium
-npm test
-npm run test:layout
+node --experimental-strip-types tests/api.mjs     # server + dashboard (fresh local database)
+node --experimental-strip-types tests/smoke.mjs   # browser: pages, languages, booking
+node tests/layout.mjs                             # 6 screen widths × 3 languages
 ```
 
-The layout suite checks 320, 360, 390, 473, 768, and 1440px widths in Arabic,
-English, and French: a single-line orbit instruction, compact section spacing,
-the designer link, and a footer credit that stays visible above the fixed
-contact bar without duplicate bottom padding.
-It also checks three paired rows of footer links, separate call/WhatsApp targets,
-external Google Maps directions, and address copying with permission-denied feedback.
-Portrait checks cover a stationary circular photo, independently rotating gold
-decoration, and reduced-motion support. Email checks cover separate mailto/copy
-actions and clipboard success/failure feedback.
-
-## Existing public address
-
-- Primary shared address: https://ibma.almarashly84.workers.dev/
-- Additional Pages address: https://ibma-accounting-review.pages.dev/
-- Both use the same `Ibma` repository. Production follows `main`.
-- Keep the existing `ibma` Worker name and shared address; a new repository or
-  replacement public URL is not needed for website updates.
-
-## Cloudflare Pages
-
-- Build command: `npm run build`
-- Build output directory: `dist`
-- Production branch: `main`
-- Root directory: repository root
-- No API keys, database, or runtime environment variables are required.
-- The generated `dist/_headers` file configures security headers and long-lived caching for fingerprinted assets.
-- Images are local WebP assets, not dependencies on the MeDo hosting CDN.
-
-## Important behavior and publication checks
-
-- The appointment form prepares a WhatsApp draft addressed to the phone already present in the original source. It does **not** send automatically, store contact details on a server, reserve availability, or confirm appointments.
-- Office-hour validation uses `America/Toronto`; Sundays and Saturday evening slots are unavailable. Availability is not connected to the accountant's real calendar.
-- Visitors must explicitly open WhatsApp and send the prepared message, then wait for office confirmation. The form warns against submitting tax identifiers, banking information, or sensitive tax information.
-- Hard-coded testimonials, stock portraits, a fixed 5.0 score, and unverifiable “Google verified” badges were replaced with the original direct Google business-page link. No claim is made that its reviews have been independently verified.
-- Generic social-network homepage links were removed; the original business-specific Facebook link remains.
-- Contact information, business credentials/experience, professional qualifications, the Google business-page link, and existing commercial copy must be confirmed by the business owner before publication.
-- A custom domain has not been selected or verified. Canonical URLs and social-image absolute URLs should be configured only after that decision. Do not change unrelated Cloudflare zones.
-- No real booking message is sent during the automated tests.
+Structure: `src/` React site · `src/content/` shared content model, defaults and validation (used by site and server) · `worker/` Cloudflare Worker · `public/admin/` dashboard · `tests/`.

@@ -3,6 +3,9 @@ import { useLanguage } from '../context/LanguageContext';
 import { UI_TEXT, SERVICES_LIST, COMPANY_INFO } from '../i18n/translations';
 import { BookingFormData, ServiceItem } from '../types';
 import { availableTimes, bookingUrl, officeToday, validateBooking } from '../lib/booking';
+import { track } from '../lib/track';
+import { pathFor } from '../lib/route';
+import { CONSENT_TEXT } from '../content/consent';
 import {
   Calendar,
   Clock,
@@ -37,32 +40,48 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
     preferredDate: '',
     preferredTime: '10:00 AM',
     notes: '',
+    subscribe: false,
   });
+  const [honeypot, setHoneypot] = useState('');
 
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [savedOnServer, setSavedOnServer] = useState(false);
+  const [sending, setSending] = useState(false);
   const [preparedUrl, setPreparedUrl] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const copy = {
     ar: {
-      title: 'الطلب جاهز للإرسال عبر واتساب', message: 'لم يتم إرسال الطلب أو تأكيد الموعد بعد. افتح واتساب وأرسل الرسالة، ثم انتظر تأكيد المكتب.',
-      open: 'افتح واتساب لإرسال الطلب', reset: 'تجهيز طلب آخر', submit: 'تجهيز طلب واتساب',
-      notice: 'سيتم تجهيز بياناتك في رسالة واتساب للمكتب، ولن يحفظها هذا الموقع. الموعد طلب تفضيل بتوقيت أوتاوا وليس تأكيدًا للحجز.',
+      savedTitle: 'تم تسجيل طلب موعدك لدى المكتب', savedMessage: 'سيتواصل معك المكتب لتأكيد الموعد. الموعد غير مؤكد حتى يصلك تأكيد من المكتب. لرد أسرع يمكنك أيضًا إرسال الطلب عبر واتساب.',
+      title: 'الطلب جاهز للإرسال عبر واتساب', message: 'تعذّر حفظ الطلب على الموقع الآن. لإكمال الطلب افتح واتساب وأرسل الرسالة، ثم انتظر تأكيد المكتب.',
+      open: 'إرسال الطلب عبر واتساب', reset: 'طلب موعد آخر', submit: 'إرسال طلب الموعد', sending: 'جارٍ الإرسال...',
+      notice: 'يُحفظ طلبك بأمان لدى المكتب فقط، ويمكنك أيضًا إرساله عبر واتساب. الموعد طلب بتوقيت أوتاوا وليس تأكيدًا للحجز.',
       privacy: 'لا تدخل رقم SIN أو معلومات الحسابات البنكية أو تفاصيل ضريبية حساسة في هذا النموذج.',
-      timezone: 'الأوقات بتوقيت أوتاوا — الأحد مغلق. السبت حتى 4 مساءً.', none: 'لا توجد أوقات متاحة لهذا التاريخ',
+      contactHint: 'يكفي الهاتف أو البريد الإلكتروني.', optional: 'اختياري',
+      policy: 'سياسة الخصوصية',
+      timezone: 'الأوقات بتوقيت أوتاوا وحسب ساعات عمل المكتب.', none: 'لا توجد أوقات متاحة لهذا التاريخ',
+      lead: 'احجز استشارتك المحاسبية أو الضريبية في دقيقة واحدة',
     },
     en: {
-      title: 'Your WhatsApp request is ready', message: 'Your request has not been sent or confirmed. Open WhatsApp and send the message, then wait for the office to confirm.',
-      open: 'Open WhatsApp to send request', reset: 'Prepare another request', submit: 'Prepare WhatsApp request',
-      notice: 'Your details will be prepared in a WhatsApp message to the office, not stored by this site. This is a preferred appointment time in Ottawa, not a confirmed booking.',
+      savedTitle: 'Your appointment request has been received', savedMessage: 'The office will contact you to confirm. The appointment is not confirmed until you hear from the office. For a faster reply you can also send the request by WhatsApp.',
+      title: 'Your WhatsApp request is ready', message: 'Your request could not be saved on the website right now. To complete it, open WhatsApp and send the message, then wait for the office to confirm.',
+      open: 'Send the request by WhatsApp', reset: 'Request another appointment', submit: 'Send appointment request', sending: 'Sending...',
+      notice: 'Your request is stored securely for the office only, and you can also send it by WhatsApp. This is a preferred time in Ottawa, not a confirmed booking.',
       privacy: 'Do not enter a SIN, bank account details, or sensitive tax information in this form.',
-      timezone: 'Ottawa time — closed Sundays. Saturday until 4 PM.', none: 'No available times for this date',
+      contactHint: 'A phone number or an email is enough.', optional: 'Optional',
+      policy: 'Privacy Policy',
+      timezone: 'Times are in Ottawa time, within office hours.', none: 'No available times for this date',
+      lead: 'Book your accounting or tax consultation in one minute',
     },
     fr: {
-      title: 'Votre demande WhatsApp est prête', message: 'Votre demande n’a pas été envoyée ni confirmée. Ouvrez WhatsApp et envoyez le message, puis attendez la confirmation du bureau.',
-      open: 'Ouvrir WhatsApp pour envoyer', reset: 'Préparer une autre demande', submit: 'Préparer la demande WhatsApp',
-      notice: 'Vos coordonnées seront préparées dans un message WhatsApp au bureau, sans stockage sur ce site. L’heure souhaitée est celle d’Ottawa; le rendez-vous n’est pas confirmé.',
+      savedTitle: 'Votre demande de rendez-vous a été reçue', savedMessage: 'Le bureau vous contactera pour confirmer. Le rendez-vous n’est pas confirmé tant que le bureau ne vous a pas répondu. Pour une réponse plus rapide, vous pouvez aussi envoyer la demande par WhatsApp.',
+      title: 'Votre demande WhatsApp est prête', message: 'Votre demande n’a pas pu être enregistrée sur le site pour le moment. Pour la compléter, ouvrez WhatsApp et envoyez le message, puis attendez la confirmation du bureau.',
+      open: 'Envoyer la demande par WhatsApp', reset: 'Demander un autre rendez-vous', submit: 'Envoyer la demande', sending: 'Envoi en cours...',
+      notice: 'Votre demande est conservée de façon sécurisée pour le bureau seulement, et vous pouvez aussi l’envoyer par WhatsApp. L’heure souhaitée est celle d’Ottawa; le rendez-vous n’est pas confirmé.',
       privacy: 'N’indiquez pas de NAS, de coordonnées bancaires ni de renseignements fiscaux sensibles.',
-      timezone: 'Heure d’Ottawa — fermé le dimanche. Samedi jusqu’à 16 h.', none: 'Aucune heure disponible à cette date',
+      contactHint: 'Un téléphone ou un courriel suffit.', optional: 'Facultatif',
+      policy: 'Politique de confidentialité',
+      timezone: 'Heure d’Ottawa, pendant les heures du bureau.', none: 'Aucune heure disponible à cette date',
+      lead: 'Réservez votre consultation comptable ou fiscale en une minute',
     },
   }[language];
 
@@ -82,8 +101,9 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
     setFormData((prev) => timeSlots.includes(prev.preferredTime) ? prev : { ...prev, preferredTime: timeSlots[0] || '' });
   }, [timeSlotsKey]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (sending) return;
     setErrorMessage(null);
 
     const error = validateBooking(formData, language, SERVICES_LIST.map((service) => service.id));
@@ -93,6 +113,26 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
     }
     const selected = SERVICES_LIST.find((service) => service.id === formData.serviceId)!;
     setPreparedUrl(bookingUrl(formData, selected.title[language], language, COMPANY_INFO.whatsappUrl));
+    setSending(true);
+    let saved = false;
+    try {
+      const res = await fetch('/api/booking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, language, website: honeypot }),
+      });
+      if (res.status === 400) {
+        const body = await res.json().catch(() => null) as { error?: string } | null;
+        setErrorMessage(body?.error || copy.message);
+        setSending(false);
+        return;
+      }
+      saved = res.ok;
+    } catch {
+      saved = false;
+    }
+    setSending(false);
+    setSavedOnServer(saved);
     setIsSubmitted(true);
   };
 
@@ -114,9 +154,7 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
           </h2>
 
           <p className="text-xs sm:text-sm text-slate-300">
-            {language === 'ar'
-              ? 'احجز استشارتك المحاسبية أو الضريبية في دقيقة واحدة مع المحاسب إبراهيم'
-              : 'Book your accounting or tax consultation directly in 1 minute with Accountant Ibrahim'}
+            {copy.lead}
           </p>
         </div>
 
@@ -131,16 +169,16 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
 
               <div>
                 <h3 className="text-xl font-bold text-white">
-                  {copy.title}
+                  {savedOnServer ? copy.savedTitle : copy.title}
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-md mx-auto">
-                  {copy.message}
+                  {savedOnServer ? copy.savedMessage : copy.message}
                 </p>
               </div>
 
               <div className="inline-flex items-center gap-2 p-3 rounded-xl bg-[#141C2B] border border-amber-500/30 text-xs text-amber-300">
                 <PhoneCall className="w-4 h-4 text-amber-400" />
-                <a href={preparedUrl} target="_blank" rel="noopener noreferrer" className="font-bold underline">{copy.open}</a>
+                <a href={preparedUrl} target="_blank" rel="noopener noreferrer" onClick={() => track('whatsapp', language)} className="font-bold underline">{copy.open}</a>
               </div>
 
               <div className="pt-2">
@@ -149,7 +187,8 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
                   onClick={() => {
                     setIsSubmitted(false);
                     setPreparedUrl('');
-                    setFormData({ fullName: '', email: '', phone: '', serviceId: SERVICES_LIST[0].id, preferredDate: '', preferredTime: '', notes: '' });
+                    setSavedOnServer(false);
+                    setFormData({ fullName: '', email: '', phone: '', serviceId: SERVICES_LIST[0].id, preferredDate: '', preferredTime: '', notes: '', subscribe: false });
                     onClearPreselectedService();
                   }}
                   className="px-5 py-2 rounded-xl text-xs font-bold bg-amber-500 text-black hover:bg-amber-400 transition-all"
@@ -162,6 +201,7 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
             <form onSubmit={handleSubmit} className="space-y-4" aria-describedby="booking-notice">
               <p id="booking-notice" className="text-xs leading-relaxed text-slate-300">{copy.notice}</p>
               <p className="text-xs text-amber-300">{copy.privacy}</p>
+              <p className="text-[11px] text-slate-400">{copy.contactHint}</p>
               
               {/* Error Alert */}
               {errorMessage && (
@@ -308,7 +348,7 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
               {/* Notes (Optional compact row) */}
               <div>
                 <label htmlFor="booking-notes" className="block text-xs font-bold text-slate-300 mb-1">
-                  {t.notesLabel[language]} <span className="text-slate-500 font-normal">({language === 'ar' ? 'اختياري' : 'Optional'})</span>
+                  {t.notesLabel[language]} <span className="text-slate-400 font-normal">({copy.optional})</span>
                 </label>
                 <input
                   id="booking-notes"
@@ -322,6 +362,16 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
                 />
               </div>
 
+              {/* Optional subscription to offers (unticked by default) */}
+              <label htmlFor="booking-subscribe" className="flex items-start gap-2.5 text-xs text-slate-300 leading-relaxed cursor-pointer">
+                <input id="booking-subscribe" type="checkbox" checked={!!formData.subscribe} onChange={(e) => setFormData({ ...formData, subscribe: e.target.checked })} className="mt-0.5 w-4 h-4 shrink-0 accent-amber-500" />
+                <span>{CONSENT_TEXT.booking[language]} <a href={pathFor(language, 'privacy')} className="underline text-amber-300 hover:text-amber-200">{copy.policy}</a></span>
+              </label>
+              <div className="hidden" aria-hidden="true">
+                <label htmlFor="booking-website">Website</label>
+                <input id="booking-website" tabIndex={-1} autoComplete="off" value={honeypot} onChange={(e) => setHoneypot(e.target.value)} />
+              </div>
+
               {/* Submit CTA */}
               <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <span id="booking-timezone" className="text-[11px] text-slate-400">
@@ -330,10 +380,11 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
 
                 <button
                   type="submit"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-black bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 shadow-lg shadow-amber-500/20 active:scale-95 transition-all"
+                  disabled={sending}
+                  className="disabled:opacity-60 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-black bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 shadow-lg shadow-amber-500/20 active:scale-95 transition-all"
                 >
-                  <Send className="w-3.5 h-3.5 text-black" />
-                  <span>{copy.submit}</span>
+                  <Send className="w-3.5 h-3.5 text-black" aria-hidden="true" />
+                  <span>{sending ? copy.sending : copy.submit}</span>
                 </button>
               </div>
 
