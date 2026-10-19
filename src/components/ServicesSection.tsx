@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { SERVICES_LIST, UI_TEXT } from '../i18n/translations';
 import { ServiceItem } from '../types';
+import { PosterSlider } from './PosterSlider';
 import {
   FileSpreadsheet,
   BookOpenCheck,
@@ -14,9 +15,7 @@ import {
   Scale,
   Calendar,
   ZoomIn,
-  CheckCircle2,
-  Sparkles,
-  ArrowUpRight
+  Sparkles
 } from 'lucide-react';
 
 interface ServicesSectionProps {
@@ -40,18 +39,17 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
   onSelectService,
   onBookService
 }) => {
-  const { language, dir } = useLanguage();
+  const { language } = useLanguage();
   const t = UI_TEXT.services;
-  const [viewMode, setViewMode] = useState<'compact' | 'detailed'>('compact');
 
   return (
     <section id="services" className="py-10 sm:py-16 bg-[#0A0E15] border-t border-slate-800 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Section Heading & View Mode Selector */}
+
+        {/* One section for all IBMA services and integrated solutions */}
         <div className="text-center max-w-3xl mx-auto space-y-3 mb-6 sm:mb-8">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold uppercase tracking-wider">
-            <Sparkles className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold tracking-wider">
+            <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
             <span>{t.badge[language]}</span>
           </div>
 
@@ -60,40 +58,13 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
           </h2>
 
           <p className="text-xs sm:text-sm md:text-base text-slate-300">
-            {language === 'ar'
-              ? 'انقر على أي أيقونة لتكبيرها والاطلاع على التفاصيل الكاملة والمزايا وحجز موعدك فوراً'
-              : language === 'fr'
-              ? 'Cliquez sur une icône pour l\'agrandir, voir les détails complets et réserver'
-              : 'Click any icon to zoom in, view full details, benefits, and book your appointment instantly'}
+            {t.subtitle[language]}
           </p>
-
-          {/* Quick toggle pill */}
-          <div className="pt-2 flex items-center justify-center gap-2">
-            <button
-              onClick={() => setViewMode('compact')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                viewMode === 'compact'
-                  ? 'bg-amber-500 text-black shadow-md shadow-amber-500/20'
-                  : 'bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700'
-              }`}
-            >
-              {language === 'ar' ? 'عرض الأيقونات المدمج (تصفح سريع)' : language === 'fr' ? 'Vue Icônes Compacte' : 'Compact Icons View'}
-            </button>
-            <button
-              onClick={() => setViewMode('detailed')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                viewMode === 'detailed'
-                  ? 'bg-amber-500 text-black shadow-md shadow-amber-500/20'
-                  : 'bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700'
-              }`}
-            >
-              {language === 'ar' ? 'العرض التفصيلي' : language === 'fr' ? 'Vue Détaillée' : 'Detailed Cards View'}
-            </button>
-          </div>
         </div>
 
-        {/* View Mode 1: Modern Compact Side-by-Side Icon Tiles (Reduced Height, No Boring Scroll) */}
-        {viewMode === 'compact' ? (
+        <PosterSlider />
+
+        {/* Compact icon tiles: 2 per row on phones, 3 on larger screens */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-4.5">
             {SERVICES_LIST.map((service) => (
               <div
@@ -133,7 +104,7 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
                     title={{ ar: 'انقر لعرض تفاصيل الخدمة', en: 'Click to view service details', fr: 'Cliquez pour voir les détails du service' }[language]}
                   >
                     <ZoomIn className="w-3.5 h-3.5 text-amber-400" />
-                    <span>{language === 'ar' ? 'تكبير وتفاصيل' : language === 'fr' ? 'Détails & Zoom' : 'Details & Zoom'}</span>
+                    <span>{{ ar: 'تفاصيل', en: 'Details', fr: 'Détails' }[language]}</span>
                   </button>
 
                   <button
@@ -153,63 +124,6 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
               </div>
             ))}
           </div>
-        ) : (
-          /* View Mode 2: Detailed Cards Grid */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {SERVICES_LIST.map((service) => (
-              <div
-                key={service.id}
-                className="group relative flex flex-col justify-between p-6 rounded-2xl bg-gradient-to-b from-[#131924] to-[#0D121B] border border-slate-800 hover:border-amber-500/60 hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-300"
-              >
-                <div className="flex-1 flex flex-col">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center group-hover:scale-110 group-hover:bg-amber-400 transition-all">
-                      {ICON_MAP[service.iconName] || <FileSpreadsheet className="w-6 h-6 text-amber-400" />}
-                    </div>
-                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-slate-900 border border-slate-700 text-slate-400 group-hover:text-amber-400 group-hover:border-amber-500/40 transition-colors">
-                      #{service.number}
-                    </span>
-                  </div>
-
-                  <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-amber-300 transition-colors mb-2.5">
-                    {service.title[language]}
-                  </h3>
-
-                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed mb-4">
-                    {service.description[language]}
-                  </p>
-
-                  <div className="space-y-2 mt-auto pt-4 border-t border-slate-800/80 mb-5">
-                    {service.benefits[language].map((benefit, i) => (
-                      <div key={i} className="flex items-center gap-2 text-xs text-slate-300">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                        <span>{benefit}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="pt-2 flex items-center gap-2.5">
-                  <button
-                    onClick={() => onBookService(service)}
-                    className="flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-amber-500 to-amber-600 text-black hover:from-amber-400 hover:to-amber-500 transition-all flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/20 active:scale-98"
-                  >
-                    <Calendar className="w-4 h-4" />
-                    <span>{language === 'ar' ? 'احجز الآن' : language === 'fr' ? 'Réserver' : 'Book Now'}</span>
-                  </button>
-
-                  <button
-                    onClick={() => onSelectService(service)}
-                    className="py-2.5 px-3.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors flex items-center gap-1 border border-slate-700"
-                  >
-                    <span>{language === 'ar' ? 'التفاصيل' : language === 'fr' ? 'Détails' : 'Details'}</span>
-                    <ArrowUpRight className={`w-3.5 h-3.5 ${dir === 'rtl' ? 'rotate-[-90deg]' : ''}`} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
 
       </div>
     </section>

@@ -194,6 +194,7 @@
     ['bookings', 'طلبات المواعيد'],
     ['subscribers', 'المشتركون'],
     ['services', 'الخدمات'],
+    ['slider', 'صور السلايدر'],
     ['campaign', 'الحملة الضريبية'],
     ['contact', 'التواصل وساعات العمل'],
     ['about', 'عن المحاسب'],
@@ -418,6 +419,73 @@
         return { order: value.order, hidden: value.hidden, items };
       };
       show(...header('الخدمات', 'رتّب الخدمات بالأسهم، أو أخفِ خدمة دون حذفها، واضغط على أي خدمة لتعديل نصوصها باللغات الثلاث. الخدمة المخفية لا تظهر في الموقع ولا في نموذج الحجز.'), list, saveBar('services', collect));
+    },
+
+    async slider() {
+      await loadContent();
+      const BUILTIN = {
+        'builtin:business-needs': 'تصميم «حلول الأعمال»',
+        'builtin:self-employed': 'تصميم «العمل الحر»',
+        'builtin:tax-campaign': 'تصميم «حملة الضرائب»',
+      };
+      const preview = (src) => (src.startsWith('builtin:') ? `/admin/posters/${src.slice(8)}.webp` : src);
+      const slides = clone(content.slider.slides).map((sl) => ({ ...sl, editor: null }));
+      const list = h('div');
+      const addBox = h('div', { class: 'row' });
+      const MAX = 12;
+
+      const render = () => {
+        list.replaceChildren();
+        if (!slides.length) list.append(h('div', { class: 'empty' }, 'لا توجد صور. السلايدر مخفي في الموقع حتى تضيف صورة.'));
+        slides.forEach((sl, i) => {
+          if (!sl.editor) sl.editor = langField('وصف الصورة (لقارئات الشاشة وGoogle)', sl.alt, { max: 140 });
+          const up = h('button', { type: 'button', class: 'btn small', 'aria-label': 'تحريك للأعلى', disabled: i === 0, onclick: () => { collect(); [slides[i - 1], slides[i]] = [slides[i], slides[i - 1]]; setDirty(true); render(); } }, '▲');
+          const down = h('button', { type: 'button', class: 'btn small', 'aria-label': 'تحريك للأسفل', disabled: i === slides.length - 1, onclick: () => { collect(); [slides[i + 1], slides[i]] = [slides[i], slides[i + 1]]; setDirty(true); render(); } }, '▼');
+          const del = h('button', { type: 'button', class: 'btn small danger', onclick: () => {
+            if (!confirm('إزالة هذه الصورة من السلايدر؟ الصورة المرفوعة تُحذف نهائيًا بعد الحفظ.')) return;
+            collect(); slides.splice(i, 1); setDirty(true); render();
+          } }, 'إزالة');
+          list.append(h('div', { class: 'card slide-card' },
+            h('div', { class: 'slide-head' },
+              h('img', { src: preview(sl.src), alt: '', class: 'slide-thumb' }),
+              h('div', { class: 'slide-info' }, h('strong', null, `الصورة ${i + 1}`), h('span', { class: 'help' }, BUILTIN[sl.src] || 'صورة مرفوعة'), h('div', { class: 'row' }, up, down, del))),
+            sl.editor.el));
+        });
+        addBox.replaceChildren();
+        if (slides.length >= MAX) { addBox.append(h('span', { class: 'help' }, `وصلت إلى الحد الأقصى (${MAX} صورة).`)); return; }
+        addBox.append(pick);
+        for (const [key, label] of Object.entries(BUILTIN)) {
+          if (!slides.some((sl) => sl.src === key)) addBox.append(h('button', { type: 'button', class: 'btn small', onclick: () => { collect(); slides.push({ src: key, alt: { ar: '', en: '', fr: '' }, editor: null }); setDirty(true); render(); } }, '+ ' + label));
+        }
+      };
+      const collect = () => slides.forEach((sl) => { if (sl.editor) sl.alt = sl.editor.get(); });
+
+      const file = h('input', { type: 'file', accept: 'image/jpeg,image/png,image/webp', class: 'visually-hidden', multiple: true });
+      const status = h('span', { class: 'help', role: 'status' });
+      const pick = h('button', { type: 'button', class: 'btn small primary', onclick: () => file.click() }, '+ رفع صورة جديدة');
+      file.addEventListener('change', async () => {
+        const files = [...(file.files || [])];
+        file.value = '';
+        for (const f of files) {
+          if (slides.length >= MAX) { toast(`الحد الأقصى ${MAX} صورة.`, true); break; }
+          if (f.size > 5 * 1024 * 1024) { toast(`«${f.name}» أكبر من 5 ميغابايت.`, true); continue; }
+          status.textContent = `جارٍ رفع «${f.name}»...`;
+          try {
+            const r = await api('/photo?kind=slide', { method: 'POST', body: f, raw: true, contentType: f.type || 'application/octet-stream' });
+            collect();
+            slides.push({ src: r.url, alt: { ar: '', en: '', fr: '' }, editor: null });
+            setDirty(true);
+            render();
+          } catch (ex) { if (ex.status !== 401 && ex.status !== 403) toast(ex.message, true); }
+        }
+        status.textContent = dirty ? 'تم الرفع. اضغط «حفظ» لإظهار الصور في الموقع.' : '';
+      });
+      render();
+
+      show(...header('صور السلايدر', 'الصور المتحركة أعلى قسم «خدمات IBMA والحلول المتكاملة». تتبدل تلقائيًا كل 5 ثوانٍ، ويمكن للزائر تحريكها بإصبعه. الأفضل صور مربعة تقريبًا (مثل 1080×1000)، بصيغة JPG أو PNG أو WebP حتى 5 ميغابايت.'),
+        list,
+        h('div', { class: 'card' }, h('h3', null, 'إضافة صورة'), addBox, file, status),
+        saveBar('slider', () => { collect(); return { slides: slides.map((sl) => ({ src: sl.src, alt: sl.alt })) }; }));
     },
 
     async campaign() {

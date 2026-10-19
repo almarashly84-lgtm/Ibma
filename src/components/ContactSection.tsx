@@ -42,9 +42,9 @@ export const ContactSection: React.FC = () => {
   const hours = hoursSummary(language);
   const [showMap, setShowMap] = useState(false);
   const extra = {
-    ar: { reply: 'نرد خلال 24 ساعة', parking: 'Nepean Business Park • موقف سيارات مجاني', showMap: 'عرض الخريطة', mapNote: 'تُحمَّل الخريطة من Google عند الضغط.' },
-    en: { reply: 'Reply within 24 hours', parking: 'Nepean Business Park • Free parking', showMap: 'Show map', mapNote: 'The map loads from Google when you press the button.' },
-    fr: { reply: 'Réponse sous 24 h', parking: 'Nepean Business Park • Stationnement gratuit', showMap: 'Afficher la carte', mapNote: 'La carte est chargée depuis Google lorsque vous appuyez.' },
+    ar: { parking: 'Nepean Business Park • يوجد موقف سيارات مجاني', showMap: 'عرض الخريطة', mapNote: 'تُحمَّل الخريطة من Google عند الضغط.' },
+    en: { parking: 'Nepean Business Park • Free parking available', showMap: 'Show map', mapNote: 'The map loads from Google when you press the button.' },
+    fr: { parking: 'Nepean Business Park • Stationnement gratuit sur place', showMap: 'Afficher la carte', mapNote: 'La carte est chargée depuis Google lorsque vous appuyez.' },
   }[language];
 
   return (
@@ -124,9 +124,6 @@ export const ContactSection: React.FC = () => {
                   {COMPANY_INFO.email}
                   </span>
                 </a>
-                <span className="text-[10px] text-slate-400 block">
-                  {extra.reply}
-                </span>
               </div>
               <button id="copy-email" type="button" onClick={copyEmail} aria-label={t.copyEmail[language]} title={t.copyEmail[language]} className="w-11 h-11 shrink-0 inline-flex flex-col items-center justify-center gap-0.5 rounded-lg border border-blue-500/30 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 transition-colors">
                 {emailCopyStatus === 'success' ? <Check className="w-4 h-4" aria-hidden="true" /> : <Copy className="w-4 h-4" aria-hidden="true" />}

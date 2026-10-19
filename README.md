@@ -15,14 +15,15 @@ Runs on **Cloudflare Workers** (Worker `ibma`) with a **D1** database (`ibma-db`
 | Unsubscribe | Each subscriber has a private link `/unsubscribe?t=…` (in the CSV export). Opening it shows a confirmation; mail apps can also unsubscribe in one click (POST). |
 | Privacy policy | Canadian policy (PIPEDA/CASL) in 3 languages, editable from the dashboard. |
 | Statistics | Daily anonymous totals only (visits, clicks). No cookies, no names, bots not counted. |
-| Map | Google map loads only after the visitor presses «عرض الخريطة». |
+| Services | One section «خدمات IBMA والحلول المتكاملة»: automatic poster slider (images managed in dashboard → صور السلايدر) + compact service icons. |
+| Map | Google map loads only after the visitor presses «عرض الخريطة». The address card says «يوجد موقف سيارات مجاني». |
 | Fonts | Served from the site itself (no Google Fonts request). |
 | SEO | Per-language title/description, canonical + hreflang, `sitemap.xml`, `robots.txt`, share image `og-image.png`, structured data with opening hours. |
 | Footer | English credit `by Alaa Eddin Digital Media` → https://www.alaadigital.at |
 
 ## Dashboard `/admin`
 
-Tabs: الإحصائيات · طلبات المواعيد · المشتركون · الخدمات · الحملة الضريبية · التواصل وساعات العمل · عن المحاسب · النصوص وSEO · سياسة الخصوصية · الأمان.
+Tabs: الإحصائيات · طلبات المواعيد · المشتركون · الخدمات · صور السلايدر · الحملة الضريبية · التواصل وساعات العمل · عن المحاسب · النصوص وSEO · سياسة الخصوصية · الأمان.
 
 There is no link to it on the website; open `/admin` after the site address.
 
@@ -39,9 +40,9 @@ There is no link to it on the website; open `/admin` after the site address.
 
 - [ ] «Authorized CRA Representative & E-Filer» badges (dashboard → النصوص وSEO / عن المحاسب): keep only if true.
 - [ ] Numbers in «عن المحاسب» (15+ years, 2,500+, 850+, 99.4%) must be real.
-- [ ] «نرد خلال 24 ساعة» and «موقف سيارات مجاني» in the contact section.
+- [ ] «يوجد موقف سيارات مجاني» in the contact section.
 - [ ] Privacy policy reviewed by IBMA (privacy contact person, wording).
-- [ ] Original logo file: the current logo image shows a cut tagline («Serv.cc»).
+- [ ] Logo: the tagline under the logo was redrawn as «Accounting and Tax Services» (the old image showed «Serv.cc»). The designed posters still contain the old logo; ask for originals if available.
 - [ ] Custom domain: when chosen, add it in Cloudflare (Settings → Domains & Routes); SEO tags follow the address automatically.
 - [ ] The old Pages copy `ibma-accounting-review.pages.dev` has no server/database; delete it to avoid duplicate content in Google.
 - [ ] Register the site in Google Search Console and submit `/sitemap.xml`.

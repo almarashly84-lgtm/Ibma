@@ -176,3 +176,7 @@ details.service .svc-body { padding: 14px; }
 .serp .s { color: #188038; font-size: .8rem; }
 .visually-hidden { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .card ul { margin: 0; padding-inline-start: 20px; color: var(--muted); }
+.slide-card { padding: 12px; }
+.slide-head { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
+.slide-thumb { width: 96px; height: 88px; object-fit: contain; background: var(--panel-2); border-radius: 10px; border: 1px solid var(--line); flex: none; }
+.slide-info { display: grid; gap: 4px; }

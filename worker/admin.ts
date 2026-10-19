@@ -85,6 +85,26 @@ async function getContent(env: Env) {
   return json({ ok: true, content: merged, defaults: defaultContent(), customized: Object.keys(stored) });
 }
 
+/** Media files (R2 keys) referenced by a stored section, so removed images can be deleted from storage. */
+function mediaKeys(name: SectionName, value: unknown): string[] {
+  if (!value || typeof value !== 'object') return [];
+  if (name === 'about') {
+    const photo = (value as { photo?: string }).photo;
+    return photo ? [photo] : [];
+  }
+  if (name === 'slider') {
+    const slides = (value as { slides?: { src?: string }[] }).slides || [];
+    return slides.map((s) => s.src || '').filter((src) => src.startsWith('/media/'));
+  }
+  return [];
+}
+
+async function deleteUnused(env: Env, before: string[], after: string[]) {
+  for (const url of before) {
+    if (!after.includes(url)) await env.MEDIA.delete(url.replace('/media/', '')).catch(() => undefined);
+  }
+}
+
 async function putSection(request: Request, env: Env, name: SectionName) {
   const body = await readJson(request, 200_000);
   let value;
@@ -92,21 +112,19 @@ async function putSection(request: Request, env: Env, name: SectionName) {
     return errorJson(400, e instanceof ContentError ? e.message : 'بيانات غير صالحة');
   }
   const { stored } = await loadContent(env, true);
-  const previousPhoto = name === 'about' ? (stored.about as { photo?: string } | undefined)?.photo : undefined;
+  const before = mediaKeys(name, stored[name]);
   await saveStoredContent(env, { ...stored, [name]: value });
-  if (name === 'about' && previousPhoto && previousPhoto !== (value as { photo: string }).photo) {
-    await env.MEDIA.delete(previousPhoto.replace('/media/', '')).catch(() => undefined);
-  }
+  await deleteUnused(env, before, mediaKeys(name, value));
   return json({ ok: true, value });
 }
 
 async function resetSection(env: Env, name: SectionName) {
   const { stored } = await loadContent(env, true);
   const next = { ...stored };
-  const oldPhoto = name === 'about' ? (stored.about as { photo?: string } | undefined)?.photo : undefined;
+  const before = mediaKeys(name, stored[name]);
   delete next[name];
   await saveStoredContent(env, next);
-  if (oldPhoto) await env.MEDIA.delete(oldPhoto.replace('/media/', '')).catch(() => undefined);
+  await deleteUnused(env, before, []);
   return json({ ok: true, value: defaultContent()[name] });
 }
 
@@ -118,16 +136,18 @@ function imageType(bytes: Uint8Array): { ext: 'jpg' | 'png' | 'webp'; type: stri
   return null;
 }
 
-async function uploadPhoto(request: Request, env: Env) {
+async function uploadPhoto(request: Request, env: Env, url: URL) {
+  const folder = url.searchParams.get('kind') === 'slide' ? 'slides' : 'about';
   const declared = Number(request.headers.get('Content-Length') || 0);
-  const MAX = 3 * 1024 * 1024;
-  if (declared > MAX) return errorJson(413, 'الصورة أكبر من 3 ميغابايت.');
+  const MAX = (folder === 'slides' ? 5 : 3) * 1024 * 1024;
+  const tooBig = `الصورة أكبر من ${MAX / 1024 / 1024} ميغابايت.`;
+  if (declared > MAX) return errorJson(413, tooBig);
   const bytes = new Uint8Array(await request.arrayBuffer());
-  if (bytes.length > MAX) return errorJson(413, 'الصورة أكبر من 3 ميغابايت.');
+  if (bytes.length > MAX) return errorJson(413, tooBig);
   if (bytes.length < 100) return errorJson(400, 'الملف فارغ.');
   const kind = imageType(bytes); // checked from the file content, not its name
   if (!kind) return errorJson(400, 'نوع الملف غير مدعوم. استخدم JPG أو PNG أو WebP.');
-  const key = `about/${crypto.randomUUID()}.${kind.ext}`;
+  const key = `${folder}/${crypto.randomUUID()}.${kind.ext}`;
   await env.MEDIA.put(key, bytes, { httpMetadata: { contentType: kind.type } });
   return json({ ok: true, url: `/media/${key}` });
 }
@@ -269,7 +289,7 @@ export async function handleAdmin(request: Request, env: Env, url: URL): Promise
     if (!section[2] && method === 'PUT') return putSection(request, env, name);
     if (section[2] && method === 'POST') return resetSection(env, name);
   }
-  if (path === '/photo' && method === 'POST') return uploadPhoto(request, env);
+  if (path === '/photo' && method === 'POST') return uploadPhoto(request, env, url);
   if (path === '/stats' && method === 'GET') return stats(env, url);
 
   if (path === '/bookings' && method === 'GET') return listBookings(env, url);

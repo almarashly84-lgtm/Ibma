@@ -221,6 +221,27 @@ let unsubscribeLink = '';
   pass('photo upload: real images only, served from storage, path tricks refused');
 }
 
+// ---------------------------------------------------------------- slider images
+{
+  const r = await call('/api/admin/content');
+  assert.deepEqual(r.json.content.slider.slides.map((x) => x.src), ['builtin:business-needs', 'builtin:self-employed']);
+  const bad = await call('/api/admin/content/slider', { method: 'PUT', body: { value: { slides: [{ src: 'https://evil.example/x.png', alt: { ar: '', en: '', fr: '' } }] } } });
+  assert.equal(bad.status, 400, 'outside images refused');
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+  const up = await call('/api/admin/photo?kind=slide', { method: 'POST', raw: Buffer.concat([png, Buffer.alloc(120)]), type: 'image/png' });
+  assert.equal(up.status, 200, up.text);
+  assert.match(up.json.url, /^\/media\/slides\//);
+  const slides = [{ src: up.json.url, alt: { ar: 'عرض', en: 'Offer', fr: 'Offre' } }, { src: 'builtin:tax-campaign', alt: { ar: '', en: '', fr: '' } }];
+  assert.equal((await call('/api/admin/content/slider', { method: 'PUT', body: { value: { slides } } })).status, 200);
+  assert.equal((await fetch(BASE + up.json.url)).status, 200);
+  const dup = await call('/api/admin/content/slider', { method: 'PUT', body: { value: { slides: [slides[1], slides[1]] } } });
+  assert.equal(dup.status, 400, 'same image twice refused');
+  assert.equal((await call('/api/admin/content/slider', { method: 'PUT', body: { value: { slides: [slides[1]] } } })).status, 200);
+  assert.equal((await fetch(BASE + up.json.url)).status, 404, 'removed upload is deleted from storage');
+  assert.equal((await call('/api/admin/content/slider/reset', { method: 'POST' })).status, 200);
+  pass('slider: uploads, order, duplicates and outside links refused, removed images deleted');
+}
+
 // ---------------------------------------------------------------- statistics
 {
   const s = await call('/api/admin/stats?days=7');

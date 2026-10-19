@@ -85,10 +85,18 @@ try {
     await page.screenshot({ path: `test-results/${name}-home.png`, animations: 'disabled', timeout: 15000 });
     assert.deepEqual(pageErrors, []);
     assert.deepEqual(cspErrors, []);
-    pass(`${name}: page, all images, three languages, RTL/LTR, no overflow, and CSP`);
+    assert.equal(await page.locator('#business-needs').count(), 0, 'one services section only');
+    const slider = page.locator('#poster-slider');
+    assert.equal(await slider.getAttribute('aria-roledescription'), 'carousel');
+    const firstSlide = slider.locator('[aria-roledescription="slide"]').first();
+    assert.equal(await firstSlide.getAttribute('aria-hidden'), 'false');
+    await slider.getByRole('button', { name: /Next image|الصورة التالية|Image suivante/ }).click();
+    assert.equal(await firstSlide.getAttribute('aria-hidden'), 'true', 'next button moves the slider');
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${name}: slider causes no overflow`);
+    pass(`${name}: page, all images, three languages, RTL/LTR, no overflow, CSP, one services section with slider`);
 
     await page.getByRole('button', { name: 'ENG', exact: true }).click();
-    const trigger = page.getByRole('button', { name: 'Details & Zoom', exact: true }).first();
+    const trigger = page.locator('#services').getByRole('button', { name: 'Details', exact: true }).first();
     await trigger.click();
     const dialog = page.getByRole('dialog');
     await dialog.waitFor();

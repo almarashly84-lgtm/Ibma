@@ -3,7 +3,6 @@ import { LanguageProvider } from './context/LanguageContext';
 import { Navbar } from './components/Navbar';
 import { HeroOrbit3D } from './components/HeroOrbit3D';
 import { SelfEmployedSection } from './components/SelfEmployedSection';
-import { ExpertiseBusinessSection } from './components/ExpertiseBusinessSection';
 import { TaxCampaignSection } from './components/TaxCampaignSection';
 import { ServicesSection } from './components/ServicesSection';
 import { GoogleReviewsMarquee } from './components/GoogleReviewsMarquee';
@@ -53,41 +52,34 @@ export const AppContent: React.FC = () => {
           onOpenBooking={() => handleOpenBooking()}
         />
 
-        {/* 2. Services for Self-Employed Section */}
-        <SelfEmployedSection onOpenBooking={() => handleOpenBooking()} />
-
-        {/* 3. Our Expertise Meet All Your Business Needs Section */}
-        <ExpertiseBusinessSection
-          onOpenBooking={(serviceId) => {
-            handleOpenBooking(SERVICES_LIST.find((s) => s.id === serviceId));
-          }}
-        />
-
-        {/* 4. Need a Hand with Your Taxes?! Campaign Section */}
-        {SITE.campaign.enabled && <TaxCampaignSection onOpenBooking={() => handleOpenBooking()} />}
-
-        {/* 5. 9 Accounting Services 3-Column Compact Grid Section */}
+        {/* 2. IBMA services & integrated solutions (one section, poster slider + icon tiles) */}
         <ServicesSection
           onSelectService={(service) => { track('service_open', language); setSelectedService(service); }}
           onBookService={(service) => handleOpenBooking(service)}
         />
 
-        {/* 6. Google Reviews Smooth Infinite Marquee Section */}
+        {/* 3. Services for Self-Employed Section */}
+        <SelfEmployedSection onOpenBooking={() => handleOpenBooking()} />
+
+        {/* 4. Need a Hand with Your Taxes?! Campaign Section */}
+        {SITE.campaign.enabled && <TaxCampaignSection onOpenBooking={() => handleOpenBooking()} />}
+
+        {/* 5. Google Reviews Smooth Infinite Marquee Section */}
         <GoogleReviewsMarquee />
 
-        {/* 7. Direct Appointment Booking Section (Compact) */}
+        {/* 6. Direct Appointment Booking Section (Compact) */}
         <BookingSection
           preselectedService={preselectedBookingService}
           onClearPreselectedService={() => setPreselectedBookingService(null)}
         />
 
-        {/* 8. Biography & Credentials of Accountant Ibrahim Section */}
+        {/* 7. Biography & Credentials of Accountant Ibrahim Section */}
         <AboutOwnerSection onOpenBooking={() => handleOpenBooking()} />
 
-        {/* 9. Compact Office Location, Hours & Direct Contact Section */}
+        {/* 8. Compact Office Location, Hours & Direct Contact Section */}
         <ContactSection />
 
-        {/* 10. Subscribe to offers */}
+        {/* 9. Subscribe to offers */}
         {SITE.newsletter.enabled && <NewsletterSection />}
       </main>
 

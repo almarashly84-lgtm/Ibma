@@ -11,6 +11,12 @@ export type L = Record<Language, string>;
 export type { DayHours };
 export interface ServiceText { title: L; shortDesc: L; description: L; benefits: Record<Language, string[]> }
 export interface AboutStat { val: string; label: L }
+export interface Slide { src: string; alt: L }
+
+/** Designed posters shipped with the site; uploaded slides use /media/slides/<id>.<ext>. */
+export const BUILTIN_SLIDES = ['builtin:business-needs', 'builtin:self-employed', 'builtin:tax-campaign'] as const;
+export const SLIDE_MEDIA_RE = /^\/media\/slides\/[a-f0-9-]{36}\.(jpg|png|webp)$/;
+export const MAX_SLIDES = 12;
 
 export interface SiteContent {
   contact: { phone: string; whatsapp: string; email: string; address: string; facebookUrl: string; googleReviewsUrl: string };
@@ -21,12 +27,13 @@ export interface SiteContent {
   about: { name: L; title: L; role: L; showVerifiedBadge: boolean; verifiedBadge: L; bioP1: L; bioP2: L; stats: AboutStat[]; photo: string };
   trust: { showCraBadge: boolean; craBadge: L };
   newsletter: { enabled: boolean; title: L; text: L };
+  slider: { slides: Slide[] };
   seo: { title: L; description: L };
   privacy: { updated: string; body: L };
 }
 
 export type SectionName = keyof SiteContent;
-export const SECTION_NAMES: SectionName[] = ['contact', 'hours', 'services', 'campaign', 'hero', 'about', 'trust', 'newsletter', 'seo', 'privacy'];
+export const SECTION_NAMES: SectionName[] = ['contact', 'hours', 'services', 'campaign', 'hero', 'about', 'trust', 'newsletter', 'slider', 'seo', 'privacy'];
 export const SERVICE_IDS = SERVICES_LIST.map((s) => s.id);
 
 const copyL = (v: L): L => ({ ar: v.ar, en: v.en, fr: v.fr });
@@ -75,6 +82,12 @@ export function defaultContent(): SiteContent {
         en: 'Tax-season offers, reminders of important deadlines and practical accounting tips, straight to your inbox.',
         fr: 'Offres de la saison des impôts, rappels des échéances importantes et conseils comptables, directement dans votre boîte de réception.',
       },
+    },
+    slider: {
+      slides: [
+        { src: 'builtin:business-needs', alt: { ar: 'خبراتنا تلبي كافة احتياجات عملك', en: 'Our expertise meets all of your business needs', fr: 'Notre expertise répond à tous vos besoins d’entreprise' } },
+        { src: 'builtin:self-employed', alt: { ar: 'خدمات أصحاب الأعمال الحرة', en: 'Services for self-employed', fr: 'Services pour travailleurs autonomes' } },
+      ],
     },
     seo: {
       title: { ar: 'IBMA Accounting Ltd | المحاسبة والضرائب في أوتاوا', en: 'IBMA Accounting Ltd | Accounting & Tax Services in Ottawa', fr: 'IBMA Accounting Ltd | Services comptables et fiscaux à Ottawa' },
@@ -214,6 +227,20 @@ function validators(): { [K in SectionName]: (v: unknown) => SiteContent[K] } {
     newsletter(v) {
       if (!isObj(v)) throw new ContentError('بيانات الاشتراك ناقصة');
       return { enabled: bool(v.enabled), title: textL(v.title, 80, 'العنوان'), text: textL(v.text, 300, 'النص') };
+    },
+    slider(v) {
+      if (!isObj(v) || !Array.isArray(v.slides)) throw new ContentError('بيانات السلايدر ناقصة');
+      if (v.slides.length > MAX_SLIDES) throw new ContentError(`الحد الأقصى ${MAX_SLIDES} صورة`);
+      const seen = new Set<string>();
+      const slides = v.slides.map((sl: unknown) => {
+        if (!isObj(sl)) throw new ContentError('صورة غير صالحة');
+        const src = cleanText(sl.src, 120);
+        if (!(BUILTIN_SLIDES as readonly string[]).includes(src) && !SLIDE_MEDIA_RE.test(src)) throw new ContentError('رابط صورة السلايدر غير صالح');
+        if (seen.has(src)) throw new ContentError('الصورة نفسها مضافة مرتين');
+        seen.add(src);
+        return { src, alt: textL(sl.alt, 140, 'وصف الصورة', false) };
+      });
+      return { slides };
     },
     seo(v) {
       if (!isObj(v)) throw new ContentError('بيانات SEO ناقصة');

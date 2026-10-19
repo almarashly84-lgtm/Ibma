@@ -123,7 +123,7 @@ export function robots(request: Request) {
 
 export async function serveMedia(request: Request, env: Env, pathname: string) {
   const key = pathname.slice('/media/'.length);
-  if (!/^about\/[a-z0-9-]+\.(jpg|png|webp)$/.test(key)) return new Response('Not found', { status: 404 });
+  if (!/^(about|slides)\/[a-z0-9-]+\.(jpg|png|webp)$/.test(key)) return new Response('Not found', { status: 404 });
   const object = await env.MEDIA.get(key);
   if (!object) return new Response('Not found', { status: 404 });
   const headers = new Headers({ 'Cache-Control': 'public, max-age=31536000, immutable', 'X-Content-Type-Options': 'nosniff', ETag: object.httpEtag });

@@ -1,7 +1,6 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { UI_TEXT } from '../i18n/translations';
-import { ASSETS } from '../i18n/assets';
 import { CheckCircle2, Calendar, Stethoscope, HardHat, Truck, Briefcase } from 'lucide-react';
 
 interface SelfEmployedSectionProps {
@@ -24,27 +23,9 @@ export const SelfEmployedSection: React.FC<SelfEmployedSectionProps> = ({ onOpen
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center">
+        <div className="max-w-4xl mx-auto">
           
-          {/* Left Column: Poster Image */}
-          <div className="lg:col-span-5 relative group">
-            <div className="absolute -inset-2 rounded-2xl bg-gradient-to-r from-amber-500/20 to-yellow-500/10 blur-xl opacity-70 group-hover:opacity-100 transition-opacity" />
-            <div className="relative rounded-2xl overflow-hidden border-2 border-amber-500/30 bg-[#121822] shadow-2xl shadow-black">
-              <img
-                src={ASSETS.selfEmployedImage}
-                alt="IBMA Accounting Services for Self-Employed"
-                className="w-full h-auto object-cover transform group-hover:scale-102 transition-transform duration-500"
-              />
-              <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-5">
-                <p className="text-amber-400 font-bold text-sm">
-                  {t.slogan[language]}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column: Details, Checklist, Target Sectors */}
-          <div className="lg:col-span-7 space-y-6">
+          <div className="space-y-6">
             
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold uppercase tracking-wider">
               {t.badge[language]}
@@ -59,7 +40,7 @@ export const SelfEmployedSection: React.FC<SelfEmployedSectionProps> = ({ onOpen
             </p>
 
             {/* 5 Core Checklist Points */}
-            <div className="space-y-3 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
               {t.points.map((pt, i) => (
                 <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-[#111722] border border-slate-800 hover:border-amber-500/40 transition-colors">
                   <CheckCircle2 className="w-5 h-5 text-amber-400 shrink-0" />

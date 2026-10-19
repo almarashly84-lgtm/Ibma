@@ -53,9 +53,8 @@ export const WORKING_HOURS: WorkingHour[] = [
 
 export const NAV_ITEMS: NavItem[] = [
   { id: 'hero', label: { ar: 'الرئيسية', en: 'Home', fr: 'Accueil' } },
+  { id: 'services', label: { ar: 'خدماتنا', en: 'Services', fr: 'Services' } },
   { id: 'self-employed', label: { ar: 'العمل الحر', en: 'Self-Employed', fr: 'Travailleurs Autonomes' } },
-  { id: 'business-needs', label: { ar: 'حلول الأعمال', en: 'Business Needs', fr: 'Besoins d\'Entreprise' } },
-  { id: 'services', label: { ar: 'خدماتنا', en: 'All Services', fr: 'Tous les Services' } },
   { id: 'about', label: { ar: 'من نحن', en: 'About Principal', fr: 'À Propos' } },
   { id: 'booking', label: { ar: 'حجز موعد', en: 'Book Consultation', fr: 'Prendre Rendez-vous' } },
   { id: 'contact', label: { ar: 'اتصل بنا', en: 'Contact', fr: 'Contact' } }
@@ -293,7 +292,6 @@ export const UI_TEXT = {
   nav: {
     home: { ar: 'الرئيسية', en: 'Home', fr: 'Accueil' },
     selfEmployed: { ar: 'أصحاب العمل الحر', en: 'Self-Employed', fr: 'Travailleurs Autonomes' },
-    businessNeeds: { ar: 'احتياجات الأعمال', en: 'Business Needs', fr: 'Besoins d\'Entreprise' },
     services: { ar: 'الخدمات', en: 'Services', fr: 'Services' },
     about: { ar: 'عن المالك', en: 'About Principal', fr: 'À Propos' },
     booking: { ar: 'احجز موعد', en: 'Book Appointment', fr: 'Prendre Rendez-vous' },
@@ -372,57 +370,6 @@ export const UI_TEXT = {
       fr: 'Réserver pour travailleur autonome'
     }
   },
-  businessNeeds: {
-    badge: {
-      ar: 'حلول متكاملة للشركات',
-      en: 'Comprehensive Corporate Suite',
-      fr: 'Solutions Complètes d\'Entreprise'
-    },
-    title: {
-      ar: 'خبراتنا تلبي كافة احتياجات عملك',
-      en: 'Our Expertise Meet All of Your Business Needs',
-      fr: 'Notre expertise répond à tous vos besoins d\'entreprise'
-    },
-    subtitle: {
-      ar: 'فريقنا المتخصص يوفر لشركتك البنية المالية والضريبية الصلبة للنمو والامتثال الكامل للقوانين الكندية.',
-      en: 'Delivering robust corporate financial architecture and continuous compliance with Canadian regulations.',
-      fr: 'Fournir une architecture financière solide et une conformité rigoureuse aux lois canadiennes.'
-    },
-    items: [
-      {
-        title: { ar: 'استشارات الأعمال (Business Advisory)', en: 'Business Advisory', fr: 'Conseil aux Entreprises' },
-        desc: { ar: 'استشارات استراتيجية للتوسع وتحسين الأداء المالي والضريبي.', en: 'Strategic financial insights for growth and profit optimization.', fr: 'Conseils stratégiques pour optimiser performance et rentabilité.' }
-      },
-      {
-        title: { ar: 'مسك الدفاتر (Bookkeeping)', en: 'Bookkeeping', fr: 'Tenue de Livres' },
-        desc: { ar: 'تنظيم يومي وشهري للفواتير والمطابقات الحسابية.', en: 'Accurate record keeping and monthly reconciliations.', fr: 'Enregistrement précis et conciliations mensuelles.' }
-      },
-      {
-        title: { ar: 'الرواتب ونماذج T4s (Payroll & T4s)', en: 'Payroll & T4s', fr: 'Paie & T4' },
-        desc: { ar: 'معالجة الرواتب وإصدار T4 واستقطاعات CRA دون تأخير.', en: 'Timely payroll runs, employee T4 slips, and remittances.', fr: 'Gestion de la paie, feuillets T4 et retenues sans retard.' }
-      },
-      {
-        title: { ar: 'ضريبة المبيعات (HST Filing)', en: 'HST Filing', fr: 'Déclaration TVH/TPS' },
-        desc: { ar: 'حساب ضريبة HST واسترداد مدفوعات ضريبة المدخلات ITC بدقة.', en: 'Quarterly/annual HST returns with full ITC deductions.', fr: 'Déclarations TVH/TPS et réclamation complète des CTI.' }
-      },
-      {
-        title: { ar: 'التمثيل لدى CRA (Representing to CRA)', en: 'Representing to CRA', fr: 'Représentation à l\'ARC' },
-        desc: { ar: 'التواصل المباشر مع مصلحة الضرائب وتدقيق الحسابات.', en: 'Full representation for audits, queries, and dispute defense.', fr: 'Défense et gestion complète de tout contrôle fiscal.' }
-      },
-      {
-        title: { ar: 'تسجيل الشركات (New Business Registration)', en: 'New Business Registration', fr: 'Création d\'Entreprise' },
-        desc: { ar: 'تأسيس الشركات الفيدرالية والإقليمية واستخراج أرقام الأعمال.', en: 'Seamless federal and provincial business registrations.', fr: 'Immatriculation fédérale et provinciale rapide.' }
-      },
-      {
-        title: { ar: 'التقارير المالية السنوية (Year-End Financial Reports)', en: 'Year-End Financial Reports', fr: 'Rapports Financiers Annuels' },
-        desc: { ar: 'إعداد الميزانيات العمومية وقوائم الدخل المعتمدة للبنوك.', en: 'Comprehensive balance sheets, income statements, and notices.', fr: 'États financiers complets pour banques et actionnaires.' }
-      },
-      {
-        title: { ar: 'ضريبة الشركات السنوية (Corporation Tax & Annual Filing)', en: 'Corporation Tax & Annual Filing', fr: 'Impôt des Sociétés T2' },
-        desc: { ar: 'إعداد إقرار T2 للشركات الكندية مع تعظيم الاستقطاعات القانونية.', en: 'T2 Corporate Tax preparation with advanced tax planning.', fr: 'Déclarations d\'impôt corporatif T2 avec planification avancée.' }
-      }
-    ]
-  },
   taxCampaign: {
     title: {
       ar: 'هل تحتاج إلى مساعدة في ضرائبك؟! دعنا نجعل الأمر سهلاً!',
@@ -442,19 +389,19 @@ export const UI_TEXT = {
   },
   services: {
     badge: {
-      ar: 'باقة خدماتنا المعتمدة',
-      en: 'Certified Service Offerings',
-      fr: 'Nos Services Certifiés'
+      ar: 'للأفراد وأصحاب العمل الحر والشركات',
+      en: 'For individuals, self-employed and businesses',
+      fr: 'Pour particuliers, travailleurs autonomes et entreprises'
     },
     title: {
-      ar: 'خدمات محاسبية وضريبية متكاملة',
-      en: 'Comprehensive Accounting & Tax Services',
-      fr: 'Services Comptables et Fiscaux Complets'
+      ar: 'خدمات IBMA والحلول المتكاملة',
+      en: 'IBMA Services & Integrated Solutions',
+      fr: 'Services IBMA et solutions intégrées'
     },
     subtitle: {
-      ar: 'حلول مدروسة وموثوقة مصممة خصيصاً لتلبية المعايير المالية الكندية بدقة 100%.',
-      en: 'Engineered for complete precision and compliance with Canadian regulatory standards.',
-      fr: 'Conçus pour une précision absolue et une conformité rigoureuse aux normes canadiennes.'
+      ar: 'اضغط على أي خدمة لعرض تفاصيلها ومزاياها وحجز موعدك مباشرة.',
+      en: 'Tap any service to see its details and benefits, and book your appointment directly.',
+      fr: 'Touchez un service pour voir ses détails et ses avantages, et réserver directement.'
     },
     detailsBtn: {
       ar: 'تفاصيل الخدمة',

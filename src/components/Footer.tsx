@@ -74,8 +74,8 @@ export const Footer: React.FC = () => {
                 </button>
               </li>
               <li>
-                <button onClick={() => scrollTo('business-needs')} className="hover:text-amber-400 transition-colors">
-                  {UI_TEXT.nav.businessNeeds[language]}
+                <button onClick={() => scrollTo('about')} className="hover:text-amber-400 transition-colors">
+                  {UI_TEXT.nav.about[language]}
                 </button>
               </li>
               <li>
