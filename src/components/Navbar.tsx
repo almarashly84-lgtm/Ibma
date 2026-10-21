@@ -15,6 +15,7 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ onOpenBooking }) => {
   const { language, setLanguage } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const callUs = { ar: 'اتصل بنا', en: 'Call us', fr: 'Appelez-nous' }[language];
 
   const scrollTo = (id: string) => {
     setMobileMenuOpen(false);
@@ -93,15 +94,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenBooking }) => {
               ))}
             </div>
 
-            {/* Direct Phone Call Button */}
+            {/* "Call us" icon (the number itself is in the contact section) */}
             <a
+              id="header-call"
               href={`tel:${COMPANY_INFO.phoneClean}`}
               onClick={() => track('call', language)}
-              className="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-100 border border-slate-700 hover:border-amber-500/60 hover:text-amber-300 transition-all shadow-sm"
-              dir="ltr"
+              aria-label={`${callUs} ${COMPANY_INFO.phone}`}
+              title={`${callUs} ${COMPANY_INFO.phone}`}
+              className="inline-flex shrink-0 items-center justify-center gap-2 w-11 h-11 sm:w-auto sm:px-3.5 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/40 hover:bg-amber-400 hover:text-black transition-all shadow-sm"
             >
-              <Phone className="w-3.5 h-3.5 text-amber-400" />
-              <span>{COMPANY_INFO.phone}</span>
+              <Phone className="w-5 h-5 sm:w-4 sm:h-4" aria-hidden="true" />
+              <span className="hidden sm:inline">{callUs}</span>
             </a>
 
             {/* Mobile Menu Toggle */}
@@ -140,11 +143,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenBooking }) => {
             <a
               href={`tel:${COMPANY_INFO.phoneClean}`}
               onClick={() => track('call', language)}
-              className="flex items-center justify-center gap-2 py-2.5 rounded-lg bg-slate-800 text-slate-200 text-sm font-semibold border border-slate-700"
-              dir="ltr"
+              className="flex items-center justify-center gap-2 min-h-11 rounded-lg bg-amber-500/10 text-amber-200 text-sm font-semibold border border-amber-500/40"
             >
-              <Phone className="w-4 h-4 text-amber-400" />
-              <span>{COMPANY_INFO.phone}</span>
+              <Phone className="w-4 h-4 text-amber-400" aria-hidden="true" />
+              <span>{callUs}</span>
             </a>
           </div>
         </div>

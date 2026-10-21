@@ -19,6 +19,7 @@ Runs on **Cloudflare Workers** (Worker `ibma`) with a **D1** database (`ibma-db`
 | Map | Google map loads only after the visitor presses «عرض الخريطة». The address card says «يوجد موقف سيارات مجاني». |
 | Fonts | Served from the site itself (no Google Fonts request). |
 | SEO | Per-language title/description, canonical + hreflang, `sitemap.xml`, `robots.txt`, share image `og-image.png`, structured data with opening hours. |
+| Header | «اتصل بنا» call icon (number shown only in the contact section). Order: … → عن المحاسب إبراهيم → الحجز → التواصل → الاشتراك. |
 | Footer | English credit `by Alaa Eddin Digital Media` → https://www.alaadigital.at |
 
 ## Dashboard `/admin`

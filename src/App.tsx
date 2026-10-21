@@ -67,14 +67,14 @@ export const AppContent: React.FC = () => {
         {/* 5. Google Reviews Smooth Infinite Marquee Section */}
         <GoogleReviewsMarquee />
 
-        {/* 6. Direct Appointment Booking Section (Compact) */}
+        {/* 6. Accountant Ibrahim, directly above booking and contact */}
+        <AboutOwnerSection onOpenBooking={() => handleOpenBooking()} />
+
+        {/* 7. Direct Appointment Booking Section (Compact) */}
         <BookingSection
           preselectedService={preselectedBookingService}
           onClearPreselectedService={() => setPreselectedBookingService(null)}
         />
-
-        {/* 7. Biography & Credentials of Accountant Ibrahim Section */}
-        <AboutOwnerSection onOpenBooking={() => handleOpenBooking()} />
 
         {/* 8. Compact Office Location, Hours & Direct Contact Section */}
         <ContactSection />

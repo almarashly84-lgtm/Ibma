@@ -68,6 +68,13 @@ try {
         assert(language === 'AR' ? links[row].x > links[row + 3].x : links[row].x < links[row + 3].x, 'footer column order follows language direction');
       }
       assert.equal(await page.locator('#contact-phone a[href="tel:+16138800300"]').count(), 1);
+      const headerCall = page.locator('#header-call');
+      assert.equal(await headerCall.getAttribute('href'), 'tel:+16138800300', 'header call icon dials the office');
+      assert(!(await headerCall.innerText()).includes('880'), 'header shows the call icon, not the number');
+      const box = await headerCall.boundingBox();
+      assert(box.width >= 44 && box.height >= 44 && box.x >= 0 && box.x + box.width <= width, `${width}: header call icon visible and tappable`);
+      const order = await page.evaluate(() => ['about', 'booking', 'contact'].map((id) => document.getElementById(id).getBoundingClientRect().top + scrollY));
+      assert(order[0] < order[1] && order[1] < order[2], 'Ibrahim section, then booking, then contact');
       assert.equal(await page.locator('#contact-whatsapp').getAttribute('href'), 'https://wa.me/16138800300');
       assert.equal(await page.locator('#contact-whatsapp').getAttribute('target'), '_blank');
       const directions = page.locator('#address-directions');
