@@ -1,9 +1,10 @@
 // Public endpoints used by the website: appointment requests, subscriptions, click statistics, unsubscribe.
 import type { Env } from './env';
 import { countEvent, loadContent, rateLimit, STAT_EVENTS, type StatEvent } from './db';
-import { errorJson, escapeHtml, html, json, readJson, sameOrigin } from './http';
+import { errorJson, escapeHtml, html, json, readForm, readJson, sameOrigin } from './http';
+import { globalAllowed, statsAllowed, visitorAllowed } from './limits';
 import { ipHash, randomToken } from './security';
-import { validateBooking, EMAIL_RE } from '../src/lib/booking';
+import { validateBooking, validName, EMAIL_RE } from '../src/lib/booking';
 import { cleanText, LANGS } from '../src/content/schema';
 import { CONSENT_TEXT } from '../src/content/consent';
 import type { BookingFormData, Language } from '../src/types';
@@ -17,14 +18,26 @@ const RATE_MSG: Record<Language, string> = {
   fr: 'Trop de tentatives. Veuillez réessayer dans un instant.',
 };
 
-async function upsertSubscriber(env: Env, email: string, name: string, lang: Language, source: 'newsletter' | 'booking') {
+/**
+ * Adds a subscriber. An address that is already subscribed is left unchanged (nobody can overwrite another
+ * person's name or consent). An address that unsubscribed is NOT reactivated automatically, because anyone
+ * could type someone else's address: the request is only flagged for the office to confirm with the person.
+ */
+async function addSubscriber(env: Env, email: string, name: string, lang: Language, source: 'newsletter' | 'booking') {
   const now = Date.now();
-  await env.DB.prepare(
+  const inserted = await env.DB.prepare(
     `INSERT INTO subscribers (email, name, language, source, consent_text, consent_at, status, unsubscribed_at, token)
      VALUES (?1, ?2, ?3, ?4, ?5, ?6, 'active', NULL, ?7)
-     ON CONFLICT(email) DO UPDATE SET name = excluded.name, language = excluded.language, source = excluded.source,
-       consent_text = excluded.consent_text, consent_at = excluded.consent_at, status = 'active', unsubscribed_at = NULL`,
+     ON CONFLICT(email) DO NOTHING`,
   ).bind(email, name, lang, source, CONSENT_TEXT[source][lang], now, randomToken(24)).run();
+  if (inserted.meta.changes) return true;
+  await env.DB.prepare("UPDATE subscribers SET resubscribe_requested_at = ?1 WHERE email = ?2 AND status = 'unsubscribed'").bind(now, email).run();
+  return false;
+}
+
+/** Cheap checks before any database work: per visitor (IPv4 / IPv6 /64) and site-wide. */
+async function gate(env: Env, request: Request, action: string) {
+  return (await visitorAllowed(env, request, action)) && (await globalAllowed(env, action));
 }
 
 export async function handleSubscribe(request: Request, env: Env, ctx: ExecutionContext) {
@@ -32,16 +45,17 @@ export async function handleSubscribe(request: Request, env: Env, ctx: Execution
   const body = await readJson(request, 4096);
   const lang = asLang(body.language);
   if (str(body.website)) return json({ ok: true }); // bot trap: pretend success, store nothing
-  if (!(await rateLimit(env, `sub:${await ipHash(env, request)}`, 5, 3600))) return errorJson(429, RATE_MSG[lang]);
+  if (!(await gate(env, request, 'subscribe'))) return errorJson(429, RATE_MSG[lang]);
+  const name = cleanText(str(body.name).slice(0, 200), 200);
+  const email = cleanText(str(body.email).slice(0, 300), 300).toLowerCase();
+  if (!validName(name)) return errorJson(400, 'name');
+  if (email.length > 254 || !EMAIL_RE.test(email)) return errorJson(400, 'email');
+  if (body.consent !== true) return errorJson(400, 'consent');
   const { merged } = await loadContent(env);
   if (!merged.newsletter.enabled) return errorJson(400, 'disabled');
-  const name = cleanText(str(body.name), 100);
-  const email = cleanText(str(body.email), 254).toLowerCase();
-  if (name.length < 2) return errorJson(400, 'name');
-  if (!EMAIL_RE.test(email)) return errorJson(400, 'email');
-  if (body.consent !== true) return errorJson(400, 'consent');
-  await upsertSubscriber(env, email, name, lang, 'newsletter');
-  ctx.waitUntil(countEvent(env, 'subscribe', lang));
+  if (!(await rateLimit(env, `sub:${await ipHash(env, request)}`, 5, 3600))) return errorJson(429, RATE_MSG[lang]);
+  // Same answer whether the address is new or known: the form never reveals who is subscribed.
+  if (await addSubscriber(env, email, name, lang, 'newsletter')) ctx.waitUntil(countEvent(env, 'subscribe', lang));
   return json({ ok: true });
 }
 
@@ -50,7 +64,7 @@ export async function handleBooking(request: Request, env: Env, ctx: ExecutionCo
   const body = await readJson(request, 8192);
   const lang = asLang(body.language);
   if (str(body.website)) return json({ ok: true });
-  if (!(await rateLimit(env, `book:${await ipHash(env, request)}`, 5, 3600))) return errorJson(429, RATE_MSG[lang]);
+  if (!(await gate(env, request, 'booking'))) return errorJson(429, RATE_MSG[lang]);
 
   const { merged } = await loadContent(env);
   const data: BookingFormData = {
@@ -62,17 +76,26 @@ export async function handleBooking(request: Request, env: Env, ctx: ExecutionCo
   const problem = validateBooking(data, lang, visible, new Date(), merged.hours.days);
   if (problem) return errorJson(400, problem);
 
+  if (!(await rateLimit(env, `book:${await ipHash(env, request)}`, 5, 3600))) return errorJson(429, RATE_MSG[lang]);
+
   const name = cleanText(data.fullName, 100);
   const email = cleanText(data.email, 254).toLowerCase();
   const phone = cleanText(data.phone, 30);
   const notes = cleanText(data.notes, 500, true);
+
+  // Same request sent twice (double tap, slow network, page reload): keep only one.
+  const duplicate = await env.DB.prepare(
+    `SELECT id FROM bookings WHERE created_at > ?1 AND preferred_date = ?2 AND preferred_time = ?3 AND service_id = ?4
+       AND ((?5 <> '' AND email = ?5) OR (?6 <> '' AND phone = ?6)) LIMIT 1`,
+  ).bind(Date.now() - 86_400_000, data.preferredDate, data.preferredTime, data.serviceId, email, phone).first();
+  if (duplicate) return json({ ok: true });
+
   await env.DB.prepare(
     `INSERT INTO bookings (created_at, name, email, phone, service_id, service_title, preferred_date, preferred_time, notes, language, subscribed)
      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)`,
   ).bind(Date.now(), name, email, phone, data.serviceId, merged.services.items[data.serviceId].title[lang], data.preferredDate, data.preferredTime, notes, lang, data.subscribe ? 1 : 0).run();
 
-  if (data.subscribe && email && merged.newsletter.enabled) {
-    await upsertSubscriber(env, email, name, lang, 'booking');
+  if (data.subscribe && email && merged.newsletter.enabled && await addSubscriber(env, email, name, lang, 'booking')) {
     ctx.waitUntil(countEvent(env, 'subscribe', lang));
   }
   ctx.waitUntil(countEvent(env, 'booking', lang));
@@ -83,12 +106,13 @@ const CLIENT_EVENTS = new Set<StatEvent>(['whatsapp', 'call', 'email', 'booking_
 
 export async function handleEvent(request: Request, env: Env) {
   // Beacons are fire-and-forget: always answer 204 and never reveal anything.
+  // No database work at all unless the visitor is under the in-memory limit (protects the daily write quota).
   try {
     if (!sameOrigin(request)) return new Response(null, { status: 204 });
     const body = await readJson(request, 256);
     const event = str(body.e) as StatEvent;
     if (!STAT_EVENTS.includes(event) || !CLIENT_EVENTS.has(event)) return new Response(null, { status: 204 });
-    if (await rateLimit(env, `evt:${await ipHash(env, request)}`, 60, 600)) await countEvent(env, event, asLang(body.l));
+    if (await statsAllowed(env, request)) await countEvent(env, event, asLang(body.l));
   } catch { /* ignore */ }
   return new Response(null, { status: 204 });
 }
@@ -111,7 +135,8 @@ export async function handleUnsubscribe(request: Request, env: Env, ctx: Executi
   const url = new URL(request.url);
   let token = url.searchParams.get('t') || '';
   if (request.method === 'POST') {
-    const form = await request.formData().catch(() => null);
+    if (!(await visitorAllowed(env, request, 'unsubscribe'))) return unsubPage(asLang(url.searchParams.get('l')), `<p>${RATE_MSG[asLang(url.searchParams.get('l'))]}</p>`, 429);
+    const form = await readForm(request, 2048).catch(() => null);
     token = token || String(form?.get('t') || '');
   }
   token = token.slice(0, 64);

@@ -30,6 +30,22 @@ There is no link to it on the website; open `/admin` after the site address.
 
 **Security:** PBKDF2 password hash · forced change of the temporary password · HttpOnly/Secure/SameSite=Strict cookie, 7 days · lock 15 min after 5 wrong passwords · cross-site request blocking · server-side validation of every field · uploaded images checked by content · CSV formula neutralising · text only (no HTML) · strict CSP · IP addresses only as salted hashes, deleted within 48 h · requests older than 24 months deleted daily (cron).
 
+## Protection against abuse (reviewed 2026-10-23)
+
+- Cloudflare rate-limit bindings (in memory, no database cost) stop floods before any database work: per visitor
+  network (IPv4 address / IPv6 /64) and site-wide, for booking, subscribe, unsubscribe, login and statistics.
+- Statistics writes are capped (15,000/day) so fake traffic cannot use up the account's free daily D1 write quota
+  (100,000/day, shared by every site on the account) and stop bookings on this or other sites.
+- Pages never depend on the database: if D1 is unavailable, the site is served with built-in content.
+- Request bodies are read with a hard size limit, also when sent without Content-Length.
+- Names with links/e-mail/HTML are refused; repeated identical booking requests are stored once.
+- An existing subscriber cannot be overwritten; an address that unsubscribed is never reactivated automatically
+  (the office sees the request and confirms with the person first — CASL).
+- Dashboard: atomic per-section saves, sessions extended while in use, login flood limit before password hashing,
+  uploaded images served with a sandbox CSP; unused uploads deleted daily.
+- Not solvable in code: a very large attack from many networks can still reach the free plan's 100,000 requests/day.
+  Recommended: a custom domain with a Cloudflare WAF rate-limiting rule, and the Workers Paid plan if traffic grows.
+
 ## First-time setup (once)
 
 1. Cloudflare → Workers & Pages → `ibma` → Settings → Variables and Secrets → **Add** → type **Secret**:

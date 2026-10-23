@@ -1,7 +1,8 @@
 // Dashboard API (/api/admin/*). Every route except login requires a valid session cookie.
 import type { Env } from './env';
-import { loadContent, saveStoredContent, STAT_EVENTS } from './db';
-import { errorJson, json, readJson, sameOrigin } from './http';
+import { loadContent, removeSection, saveSection, STAT_EVENTS } from './db';
+import { errorJson, json, readBytes, readJson, sameOrigin } from './http';
+import { globalAllowed, visitorAllowed } from './limits';
 import {
   clearSessionCookie, createSession, currentSession, deleteSession, getAdminPasswordHash, hashPassword, ipHash,
   passwordProblem, safeEqual, setAdminPasswordHash, verifyPassword,
@@ -39,6 +40,10 @@ async function mustChangePassword(env: Env) {
 }
 
 async function login(request: Request, env: Env) {
+  // In-memory limits first: password checks are CPU-heavy, so floods are refused before any work is done.
+  if (!(await visitorAllowed(env, request, 'login')) || !(await globalAllowed(env, 'login'))) {
+    return errorJson(429, 'محاولات كثيرة. انتظر دقيقة ثم حاول مرة أخرى.');
+  }
   const body = await readJson(request, 1024);
   const password = typeof body.password === 'string' ? body.password : '';
   const ip = await ipHash(env, request);
@@ -113,17 +118,15 @@ async function putSection(request: Request, env: Env, name: SectionName) {
   }
   const { stored } = await loadContent(env, true);
   const before = mediaKeys(name, stored[name]);
-  await saveStoredContent(env, { ...stored, [name]: value });
+  await saveSection(env, name, value);
   await deleteUnused(env, before, mediaKeys(name, value));
   return json({ ok: true, value });
 }
 
 async function resetSection(env: Env, name: SectionName) {
   const { stored } = await loadContent(env, true);
-  const next = { ...stored };
   const before = mediaKeys(name, stored[name]);
-  delete next[name];
-  await saveStoredContent(env, next);
+  await removeSection(env, name);
   await deleteUnused(env, before, []);
   return json({ ok: true, value: defaultContent()[name] });
 }
@@ -138,12 +141,10 @@ function imageType(bytes: Uint8Array): { ext: 'jpg' | 'png' | 'webp'; type: stri
 
 async function uploadPhoto(request: Request, env: Env, url: URL) {
   const folder = url.searchParams.get('kind') === 'slide' ? 'slides' : 'about';
-  const declared = Number(request.headers.get('Content-Length') || 0);
   const MAX = (folder === 'slides' ? 5 : 3) * 1024 * 1024;
   const tooBig = `الصورة أكبر من ${MAX / 1024 / 1024} ميغابايت.`;
-  if (declared > MAX) return errorJson(413, tooBig);
-  const bytes = new Uint8Array(await request.arrayBuffer());
-  if (bytes.length > MAX) return errorJson(413, tooBig);
+  let bytes: Uint8Array;
+  try { bytes = await readBytes(request, MAX); } catch { return errorJson(413, tooBig); }
   if (bytes.length < 100) return errorJson(400, 'الملف فارغ.');
   const kind = imageType(bytes); // checked from the file content, not its name
   if (!kind) return errorJson(400, 'نوع الملف غير مدعوم. استخدم JPG أو PNG أو WebP.');
@@ -221,7 +222,7 @@ async function listSubscribers(env: Env, url: URL) {
   if (q) { params.push(likeTerm(q)); where.push(`(name LIKE ?${params.length} ESCAPE '\\' OR email LIKE ?${params.length} ESCAPE '\\')`); }
   const clause = where.length ? `WHERE ${where.join(' AND ')}` : '';
   const total = await env.DB.prepare(`SELECT COUNT(*) AS n FROM subscribers ${clause}`).bind(...params).first<{ n: number }>();
-  const rows = await env.DB.prepare(`SELECT id, email, name, language, source, consent_at, status, unsubscribed_at FROM subscribers ${clause} ORDER BY consent_at DESC LIMIT 50 OFFSET ${(page - 1) * 50}`).bind(...params).all();
+  const rows = await env.DB.prepare(`SELECT id, email, name, language, source, consent_at, status, unsubscribed_at, resubscribe_requested_at FROM subscribers ${clause} ORDER BY consent_at DESC LIMIT 50 OFFSET ${(page - 1) * 50}`).bind(...params).all();
   return json({ ok: true, total: total?.n ?? 0, page, pageSize: 50, rows: rows.results });
 }
 
@@ -266,8 +267,19 @@ export async function handleAdmin(request: Request, env: Env, url: URL): Promise
 
   if (path === '/login' && method === 'POST') return login(request, env);
 
-  const session = await currentSession(env, request);
-  if (!session) return errorJson(401, 'unauthorized', { 'Set-Cookie': clearSessionCookie() });
+  const found = await currentSession(env, request);
+  if (!found) return errorJson(401, 'unauthorized', { 'Set-Cookie': clearSessionCookie() });
+  const response = await route(request, env, url, path, method, found.id);
+  // Session extended while in use: send the refreshed cookie (unless the route set or cleared it).
+  if (found.renewCookie && !response.headers.has('Set-Cookie')) {
+    const headers = new Headers(response.headers);
+    headers.set('Set-Cookie', found.renewCookie);
+    return new Response(response.body, { status: response.status, headers });
+  }
+  return response;
+}
+
+async function route(request: Request, env: Env, url: URL, path: string, method: string, session: string): Promise<Response> {
 
   if (path === '/logout' && method === 'POST') {
     await deleteSession(env, session);
@@ -306,12 +318,19 @@ export async function handleAdmin(request: Request, env: Env, url: URL): Promise
 
   if (path === '/subscribers' && method === 'GET') return listSubscribers(env, url);
   if (path === '/subscribers.csv' && method === 'GET') return subscribersCsv(env, url);
-  const sub = path.match(/^\/subscribers\/(\d{1,10})(\/unsubscribe)?$/);
+  const sub = path.match(/^\/subscribers\/(\d{1,10})(\/unsubscribe|\/reactivate)?$/);
   if (sub) {
     const id = Number(sub[1]);
-    if (sub[2] && method === 'POST') {
+    if (sub[2] === '/unsubscribe' && method === 'POST') {
       const res = await env.DB.prepare("UPDATE subscribers SET status = 'unsubscribed', unsubscribed_at = ?1 WHERE id = ?2 AND status = 'active'").bind(Date.now(), id).run();
       return res.meta.changes ? json({ ok: true }) : errorJson(404, 'المشترك غير موجود أو ملغى مسبقًا');
+    }
+    if (sub[2] === '/reactivate' && method === 'POST') {
+      // Only after the office has confirmed with the person that they want offers again.
+      const res = await env.DB.prepare(
+        "UPDATE subscribers SET status = 'active', unsubscribed_at = NULL, resubscribe_requested_at = NULL, consent_at = ?1, consent_text = 'Consent confirmed again with the office' WHERE id = ?2 AND status = 'unsubscribed'",
+      ).bind(Date.now(), id).run();
+      return res.meta.changes ? json({ ok: true }) : errorJson(404, 'المشترك غير موجود أو مفعّل مسبقًا');
     }
     if (!sub[2] && method === 'DELETE') {
       const res = await env.DB.prepare('DELETE FROM subscribers WHERE id = ?1').bind(id).run();

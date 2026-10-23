@@ -725,6 +725,11 @@
   }
 
   function digits(s) { return String(s || '').replace(/\D/g, ''); }
+  /** International number for call/WhatsApp links: a 10-digit local number is Canadian/US (+1). */
+  function intlDigits(s) {
+    const d = digits(s);
+    return d.length === 10 && !String(s).trim().startsWith('+') ? '1' + d : d;
+  }
 
   function bookingCard(b) {
     const statusSel = h('select', { 'aria-label': 'حالة الطلب' }, Object.entries(STATUS).map(([k, v]) => h('option', { value: k }, v)));
@@ -756,8 +761,8 @@
 
     const links = [];
     if (b.phone) {
-      links.push(h('a', { class: 'btn small', href: 'tel:+' + digits(b.phone) }, 'اتصال'));
-      links.push(h('a', { class: 'btn small', href: 'https://wa.me/' + digits(b.phone), target: '_blank', rel: 'noopener noreferrer' }, 'واتساب'));
+      links.push(h('a', { class: 'btn small', href: 'tel:+' + intlDigits(b.phone) }, 'اتصال'));
+      links.push(h('a', { class: 'btn small', href: 'https://wa.me/' + intlDigits(b.phone), target: '_blank', rel: 'noopener noreferrer' }, 'واتساب'));
     }
     if (b.email) links.push(h('a', { class: 'btn small', href: 'mailto:' + encodeURIComponent(b.email).replace('%40', '@') }, 'بريد'));
 
@@ -816,6 +821,13 @@
           catch (ex) { if (ex.status !== 401 && ex.status !== 403) toast(ex.message, true); }
         } }, 'إلغاء الاشتراك'));
       }
+      if (sub.status === 'unsubscribed' && sub.resubscribe_requested_at) {
+        actions.append(h('button', { type: 'button', class: 'btn small primary', onclick: async () => {
+          if (!confirm(`هل تأكدت مباشرة من صاحب البريد ${sub.email} أنه يريد استلام العروض من جديد؟\nلا تفعّل الاشتراك دون موافقته، لأن أي شخص قد يكتب بريد غيره.`)) return;
+          try { await api(`/subscribers/${sub.id}/reactivate`, { method: 'POST' }); toast('تمت إعادة تفعيل الاشتراك.'); openTab('subscribers', true); }
+          catch (ex) { if (ex.status !== 401 && ex.status !== 403) toast(ex.message, true); }
+        } }, 'إعادة التفعيل بعد التأكد'));
+      }
       actions.append(h('button', { type: 'button', class: 'btn small danger', onclick: async () => {
         if (!confirm(`حذف ${sub.email} نهائيًا من القائمة؟\nاستخدمه فقط إذا طلب الشخص حذف بياناته. بعد الحذف لا يبقى سجل بأنه ألغى الاشتراك.`)) return;
         try { await api('/subscribers/' + sub.id, { method: 'DELETE' }); card.remove(); toast('تم الحذف.'); }
@@ -826,6 +838,9 @@
           h('div', null, h('div', { class: 'item-name' }, sub.name), h('div', { dir: 'ltr', class: 'item-meta' }, sub.email)),
           h('span', { class: 'pill ' + sub.status }, sub.status === 'active' ? 'نشط' : 'ألغى الاشتراك')),
         h('div', { class: 'item-meta' }, `الموافقة: ${fmtDateTime(sub.consent_at)} · المصدر: ${SOURCE[sub.source] || sub.source} · اللغة: ${LANG_NAME[sub.language] || sub.language}` + (sub.unsubscribed_at ? ` · ألغى في ${fmtDateTime(sub.unsubscribed_at)}` : '')),
+        sub.status === 'unsubscribed' && sub.resubscribe_requested_at
+          ? h('div', { class: 'alert warn' }, `طلب اشتراك جديد بهذا البريد في ${fmtDateTime(sub.resubscribe_requested_at)}. لم يُفعَّل تلقائيًا لأن صاحبه ألغى اشتراكه سابقًا: تواصل معه وتأكد أولًا.`)
+          : null,
         actions);
       list.append(card);
     }

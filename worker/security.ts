@@ -1,6 +1,7 @@
 // Passwords, sessions and privacy-friendly IP hashing.
 import type { Env } from './env';
 import { getSetting, setSetting } from './db';
+import { clientNetwork } from './net';
 
 const enc = new TextEncoder();
 
@@ -78,12 +79,19 @@ function sessionToken(request: Request) {
   return null;
 }
 
-export async function currentSession(env: Env, request: Request) {
+/** Valid session, or null. Sessions are extended while in use (sliding expiry), at most one write per day. */
+export async function currentSession(env: Env, request: Request): Promise<{ id: string; renewCookie?: string } | null> {
   const token = sessionToken(request);
-  if (!token || token.length > 100) return null;
+  if (!token || token.length > 100 || !/^[A-Za-z0-9_-]+$/.test(token)) return null;
   const id = await sha256Hex(token);
-  const row = await env.DB.prepare('SELECT id FROM sessions WHERE id = ?1 AND expires_at > ?2').bind(id, Date.now()).first<{ id: string }>();
-  return row ? id : null;
+  const now = Date.now();
+  const row = await env.DB.prepare('SELECT id, expires_at FROM sessions WHERE id = ?1 AND expires_at > ?2').bind(id, now).first<{ id: string; expires_at: number }>();
+  if (!row) return null;
+  if (row.expires_at - now < SESSION_MS - 86_400_000) {
+    await env.DB.prepare('UPDATE sessions SET expires_at = ?1 WHERE id = ?2').bind(now + SESSION_MS, id).run();
+    return { id, renewCookie: `${SESSION_COOKIE}=${token}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=${SESSION_MS / 1000}` };
+  }
+  return { id };
 }
 
 export async function deleteSession(env: Env, id: string) {
@@ -106,8 +114,7 @@ async function ipSalt(env: Env) {
 }
 
 export async function ipHash(env: Env, request: Request) {
-  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-  return (await sha256Hex(`${await ipSalt(env)}|${ip}`)).slice(0, 32);
+  return (await sha256Hex(`${await ipSalt(env)}|${clientNetwork(request)}`)).slice(0, 32);
 }
 
 // ------------------------------------------------------------- admin password storage

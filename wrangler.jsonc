@@ -21,6 +21,12 @@
   "d1_databases": [
     { "binding": "DB", "database_name": "ibma-db", "database_id": "a097d736-b549-4368-986b-e94f390adfa4" }
   ],
+  // Rate limits (in memory, no database cost). period must be 10 or 60 seconds.
+  "ratelimits": [
+    { "name": "RL_VISITOR", "namespace_id": "4101", "simple": { "limit": 10, "period": 60 } },
+    { "name": "RL_GLOBAL", "namespace_id": "4102", "simple": { "limit": 30, "period": 60 } },
+    { "name": "RL_STATS", "namespace_id": "4103", "simple": { "limit": 30, "period": 60 } }
+  ],
   "r2_buckets": [
     { "binding": "MEDIA", "bucket_name": "ibma-media" }
   ],

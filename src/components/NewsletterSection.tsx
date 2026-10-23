@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { BellRing, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { SITE } from '../content/apply';
-import { EMAIL_RE } from '../lib/booking';
+import { EMAIL_RE, validName } from '../lib/booking';
 import { pathFor } from '../lib/route';
 import { CONSENT_TEXT } from '../content/consent';
 
@@ -11,21 +11,21 @@ const COPY = {
     name: 'الاسم', email: 'البريد الإلكتروني', submit: 'اشترك', sending: 'جارٍ الاشتراك...',
     privacy: 'سياسة الخصوصية',
     ok: 'تم اشتراكك بنجاح. شكرًا لك!',
-    errName: 'يرجى إدخال اسم من 2 إلى 100 حرف.', errEmail: 'البريد الإلكتروني غير صالح.', errConsent: 'يرجى وضع علامة على مربع الموافقة للاشتراك.',
+    errName: 'يرجى إدخال اسمك (من 2 إلى 100 حرف، دون روابط).', errEmail: 'البريد الإلكتروني غير صالح.', errConsent: 'يرجى وضع علامة على مربع الموافقة للاشتراك.',
     errServer: 'تعذّر الاشتراك الآن. يرجى المحاولة لاحقًا.', errRate: 'محاولات كثيرة. يرجى المحاولة بعد قليل.',
   },
   en: {
     name: 'Name', email: 'Email', submit: 'Subscribe', sending: 'Subscribing...',
     privacy: 'Privacy Policy',
     ok: 'You are subscribed. Thank you!',
-    errName: 'Please enter a name of 2–100 characters.', errEmail: 'Please enter a valid email.', errConsent: 'Please tick the consent box to subscribe.',
+    errName: 'Please enter your name (2–100 characters, no links).', errEmail: 'Please enter a valid email.', errConsent: 'Please tick the consent box to subscribe.',
     errServer: 'Subscription is not possible right now. Please try again later.', errRate: 'Too many attempts. Please try again shortly.',
   },
   fr: {
     name: 'Nom', email: 'Courriel', submit: 'S’abonner', sending: 'Abonnement en cours...',
     privacy: 'Politique de confidentialité',
     ok: 'Votre abonnement est confirmé. Merci!',
-    errName: 'Veuillez saisir un nom de 2 à 100 caractères.', errEmail: 'Le courriel est invalide.', errConsent: 'Veuillez cocher la case de consentement pour vous abonner.',
+    errName: 'Veuillez saisir votre nom (2 à 100 caractères, sans lien).', errEmail: 'Le courriel est invalide.', errConsent: 'Veuillez cocher la case de consentement pour vous abonner.',
     errServer: 'L’abonnement est impossible pour le moment. Veuillez réessayer plus tard.', errRate: 'Trop de tentatives. Veuillez réessayer dans un instant.',
   },
 };
@@ -44,7 +44,7 @@ export const NewsletterSection: React.FC = () => {
     event.preventDefault();
     const n = name.trim(), e = email.trim();
     const fail = (m: string) => { setStatus('error'); setMessage(m); };
-    if (n.length < 2 || n.length > 100) return fail(c.errName);
+    if (!validName(n)) return fail(c.errName);
     if (e.length > 254 || !EMAIL_RE.test(e)) return fail(c.errEmail);
     if (!consent) return fail(c.errConsent);
     setStatus('sending');

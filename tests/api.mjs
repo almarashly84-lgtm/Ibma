@@ -2,6 +2,7 @@
 //   npx wrangler dev --local   (with .dev.vars containing ADMIN_INITIAL_PASSWORD=Local-Test-Only-2026)
 //   node --experimental-strip-types tests/api.mjs
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { availableTimes, officeToday } from '../src/lib/booking.ts';
 
 const BASE = process.env.TEST_BASE_URL || 'http://127.0.0.1:8787';
@@ -73,11 +74,41 @@ const booking = (extra = {}) => ({ fullName: 'Test Visitor', email: 'visitor@exa
   assert.equal(again.status, 200, 'same email again is accepted without revealing it exists');
   const badEmail = await call('/api/subscribe', { method: 'POST', body: { name: 'X Y', email: 'bad', language: 'en', consent: true }, ip });
   assert.equal(badEmail.status, 400);
-  const limited = await call('/api/subscribe', { method: 'POST', body: { name: 'Sara', email: 'sara2@example.test', language: 'ar', consent: true }, ip });
-  const limited2 = await call('/api/subscribe', { method: 'POST', body: { name: 'Sara', email: 'sara3@example.test', language: 'ar', consent: true }, ip });
-  assert.equal(limited.status, 200);
-  assert.equal(limited2.status, 429, 'sixth attempt within an hour is limited');
-  pass('subscriptions: consent required, duplicates merged, invalid email refused, rate limit');
+  const spamName = await call('/api/subscribe', { method: 'POST', body: { name: 'Win money www.spam.example', email: 'spam@example.test', language: 'en', consent: true }, ip });
+  assert.equal(spamName.status, 400, 'links in names are refused');
+  for (const n of [2, 3, 4]) {
+    const r = await call('/api/subscribe', { method: 'POST', body: { name: 'Sara', email: `sara${n}@example.test`, language: 'ar', consent: true }, ip });
+    assert.equal(r.status, 200);
+  }
+  const limited = await call('/api/subscribe', { method: 'POST', body: { name: 'Sara', email: 'sara5@example.test', language: 'ar', consent: true }, ip });
+  assert.equal(limited.status, 429, 'sixth valid attempt within an hour is limited');
+  pass('subscriptions: consent required, existing subscriber not overwritten, links in names refused, rate limit');
+}
+{
+  // IPv6: changing the last part of the address (same /64 network) must not bypass the limit.
+  let last;
+  for (let i = 1; i <= 6; i++) {
+    last = await call('/api/subscribe', { method: 'POST', body: { name: 'Rotating Visitor', email: `rot${i}@example.test`, language: 'en', consent: true }, ip: `2001:db8:77:88::${i}` });
+    if (i <= 5) assert.equal(last.status, 200, `attempt ${i}`);
+  }
+  assert.equal(last.status, 429, 'IPv6 address rotation inside one /64 is limited');
+  const other = await call('/api/subscribe', { method: 'POST', body: { name: 'Other Network', email: 'othernet@example.test', language: 'en', consent: true }, ip: '2001:db8:77:99::1' });
+  assert.equal(other.status, 200, 'a different network is not affected');
+  pass('rate limits group IPv6 addresses by /64 network');
+}
+{
+  // Body sent without Content-Length (chunked): the server must stop reading at the limit.
+  const big = new ReadableStream({ start(c) { for (let i = 0; i < 40; i++) c.enqueue(new TextEncoder().encode('x'.repeat(1024))); c.close(); } });
+  const res = await fetch(BASE + '/api/booking', { method: 'POST', body: big, duplex: 'half', headers: { Origin: BASE, 'Content-Type': 'application/json', 'CF-Connecting-IP': nextIp() } });
+  assert.equal(res.status, 413);
+  const spam = await call('/api/booking', { method: 'POST', body: booking({ fullName: 'Visit https://spam.example' }), ip: nextIp() });
+  assert.equal(spam.status, 400, 'links in booking names are refused');
+  const ip = nextIp();
+  const first = await call('/api/booking', { method: 'POST', body: booking({ email: 'twice@example.test', phone: '+1 613 555 0199' }), ip });
+  const second = await call('/api/booking', { method: 'POST', body: booking({ email: 'twice@example.test', phone: '+1 613 555 0199' }), ip });
+  assert.equal(first.status, 200);
+  assert.equal(second.status, 200, 'a repeated request gets the same friendly answer');
+  pass('oversized bodies without Content-Length stopped; spam names refused; repeated request accepted once');
 }
 {
   for (const e of ['whatsapp', 'call', 'call', 'nonsense']) {
@@ -181,7 +212,10 @@ let unsubscribeLink = '';
 
   const subs = await call('/api/admin/subscribers?status=active');
   const emails = subs.json.rows.map((s) => s.email).sort();
-  assert.deepEqual(emails, ['booker@example.test', 'sara2@example.test', 'sara@example.test']);
+  assert.deepEqual(emails, ['booker@example.test', 'othernet@example.test', 'rot1@example.test', 'rot2@example.test', 'rot3@example.test', 'rot4@example.test', 'rot5@example.test', 'sara2@example.test', 'sara3@example.test', 'sara4@example.test', 'sara@example.test']);
+  assert.equal(subs.json.rows.find((x) => x.email === 'sara@example.test').name, 'Sara', 'a second sign-up cannot change the name');
+  const twice = (await call('/api/admin/bookings?q=twice')).json;
+  assert.equal(twice.total, 1, 'duplicate booking stored once');
   const subCsv = await call('/api/admin/subscribers.csv');
   unsubscribeLink = subCsv.text.match(/https?:\/\/[^"]+\/unsubscribe\?t=[A-Za-z0-9_-]+/)[0];
   pass('requests: listed, status and note saved, CSV export safe; subscribers listed with unsubscribe links');
@@ -199,7 +233,16 @@ let unsubscribeLink = '';
   assert.equal(invalid.status, 404);
   const subs = await call('/api/admin/subscribers?status=unsubscribed');
   assert.equal(subs.json.rows.length, 1);
-  pass('unsubscribe link: confirmation page, one-click POST, invalid tokens refused');
+  const gone = subs.json.rows[0];
+  // Someone types the unsubscribed address again: it must NOT be reactivated automatically.
+  const again = await call('/api/subscribe', { method: 'POST', body: { name: 'Someone Else', email: gone.email, language: 'en', consent: true }, ip: nextIp() });
+  assert.equal(again.status, 200);
+  const still = (await call('/api/admin/subscribers?status=unsubscribed')).json.rows[0];
+  assert.equal(still.email, gone.email);
+  assert.ok(still.resubscribe_requested_at, 'request flagged for the office');
+  assert.equal((await call(`/api/admin/subscribers/${still.id}/reactivate`, { method: 'POST' })).status, 200);
+  assert.equal((await call('/api/admin/subscribers?status=unsubscribed')).json.rows.length, 0);
+  pass('unsubscribe link: confirmation page, one-click POST, invalid tokens refused; no automatic re-subscription');
 }
 
 // ---------------------------------------------------------------- photo upload
@@ -213,6 +256,7 @@ let unsubscribeLink = '';
   const img = await fetch(BASE + up.json.url);
   assert.equal(img.status, 200);
   assert.equal(img.headers.get('content-type'), 'image/png');
+  assert.match(img.headers.get('content-security-policy') || '', /sandbox/, 'uploads can never run as a page');
   const r = await call('/api/admin/content');
   const about = { ...r.json.content.about, photo: up.json.url };
   assert.equal((await call('/api/admin/content/about', { method: 'PUT', body: { value: about } })).status, 200);
@@ -242,6 +286,20 @@ let unsubscribeLink = '';
   pass('slider: uploads, order, duplicates and outside links refused, removed images deleted');
 }
 
+// ---------------------------------------------------------------- page-view flood
+{
+  for (let i = 0; i < 45; i++) {
+    const r = await fetch(BASE + '/fr/privacy', { headers: { 'User-Agent': 'Mozilla/5.0 Flood', 'CF-Connecting-IP': '198.51.100.250' } });
+    assert.equal(r.status, 200, 'the page keeps working during a flood');
+    await r.text();
+  }
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  const s = (await call('/api/admin/stats?days=1')).json;
+  const counted = s.rows.filter((r) => r.event === 'view_privacy').reduce((a, r) => a + r.count, 0);
+  assert.ok(counted >= 1 && counted <= 35, `flood not fully counted (counted ${counted} of 45)`);
+  pass('page reload flood: pages keep working, statistics writes capped per visitor');
+}
+
 // ---------------------------------------------------------------- statistics
 {
   const s = await call('/api/admin/stats?days=7');
@@ -253,6 +311,17 @@ let unsubscribeLink = '';
   assert.ok(total('booking') >= 1);
   assert.ok(total('subscribe') >= 3);
   pass('statistics: clicks, visits (bots excluded), requests and subscriptions counted');
+}
+
+// ---------------------------------------------------------------- sliding session
+if (!process.env.TEST_BASE_URL || process.env.TEST_BASE_URL.includes('127.0.0.1')) {
+  // Make the session look 5 days old, then use the dashboard: it must be extended (and the cookie refreshed).
+  const soon = Date.now() + 2 * 86_400_000;
+  execFileSync('npx', ['wrangler', 'd1', 'execute', 'ibma-db', '--local', '--command', `UPDATE sessions SET expires_at = ${soon}`], { stdio: 'ignore' });
+  const r = await call('/api/admin/me');
+  assert.equal(r.status, 200);
+  assert.match(r.headers.get('set-cookie') || '', /__Host-ibma_admin=[A-Za-z0-9_-]+; .*Max-Age=604800/, 'session renewed while in use');
+  pass('sessions are extended while the dashboard is in use');
 }
 
 // ---------------------------------------------------------------- logout & lockout

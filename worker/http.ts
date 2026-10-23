@@ -63,12 +63,36 @@ export class HttpError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
 
-/** Reads a JSON body with a size limit. */
-export async function readJson(request: Request, maxBytes: number): Promise<Record<string, unknown>> {
+/**
+ * Reads a request body with a hard size limit, stopping as soon as the limit is passed.
+ * (Checking only Content-Length is not enough: a body can be sent without it.)
+ */
+export async function readBytes(request: Request, maxBytes: number): Promise<Uint8Array> {
   const declared = Number(request.headers.get('Content-Length') || 0);
   if (declared > maxBytes) throw new HttpError(413, 'too_large');
-  const text = await request.text();
-  if (new TextEncoder().encode(text).length > maxBytes) throw new HttpError(413, 'too_large');
+  if (!request.body) return new Uint8Array(0);
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > maxBytes) {
+      await reader.cancel().catch(() => undefined);
+      throw new HttpError(413, 'too_large');
+    }
+    chunks.push(value);
+  }
+  const out = new Uint8Array(size);
+  let offset = 0;
+  for (const c of chunks) { out.set(c, offset); offset += c.byteLength; }
+  return out;
+}
+
+/** Reads a JSON object body with a size limit. */
+export async function readJson(request: Request, maxBytes: number): Promise<Record<string, unknown>> {
+  const text = new TextDecoder().decode(await readBytes(request, maxBytes));
   try {
     const data = JSON.parse(text);
     if (typeof data !== 'object' || data === null || Array.isArray(data)) throw new Error();
@@ -76,6 +100,11 @@ export async function readJson(request: Request, maxBytes: number): Promise<Reco
   } catch {
     throw new HttpError(400, 'invalid_json');
   }
+}
+
+/** Reads a small url-encoded form body with a size limit. */
+export async function readForm(request: Request, maxBytes: number): Promise<URLSearchParams> {
+  return new URLSearchParams(new TextDecoder().decode(await readBytes(request, maxBytes)));
 }
 
 export const isBot = (request: Request) =>
